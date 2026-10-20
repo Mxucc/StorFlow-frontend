@@ -90,6 +90,13 @@ export interface Share {
   source_uri?: string;
   password?: string;
   show_readme?: boolean;
+  /** 付费分享（网盘小店）：是否收费、价格（分）、是否已购买、是否站点默认分享 */
+  pay_enabled?: boolean;
+  price?: number;
+  currency?: string;
+  purchased?: boolean;
+  is_default?: boolean;
+  permission?: string;
 }
 
 export enum PolicyType {
@@ -103,6 +110,8 @@ export enum PolicyType {
   s3 = "s3",
   ks3 = "ks3",
   obs = "obs",
+  /** 中国移动云盘（ZXFile 驱动移植） */
+  yun139 = "yun139",
   load_balance = "load_balance",
 }
 
@@ -308,6 +317,12 @@ export interface ShareCreateService {
   expire?: number;
   share_view?: boolean;
   show_readme?: boolean;
+  permission?: string;
+  /** 收费分享（Pro）：pay_enabled 打开后内容被门禁，价格单位为「分」 */
+  pay_enabled?: boolean;
+  price?: number;
+  /** 发布到站点默认分享列表 */
+  is_default?: boolean;
 }
 
 export interface CreateFileService {

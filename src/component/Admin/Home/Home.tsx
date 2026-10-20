@@ -1,7 +1,7 @@
-import Giscus from "@giscus/react";
 import { GitHub } from "@mui/icons-material";
 import {
   Avatar,
+  Chip,
   Box,
   Container,
   Divider,
@@ -309,10 +309,10 @@ const Home = () => {
           <Grid item xs={12} md={5} lg={4}>
             <StyledPaper sx={{ p: 0 }}>
               <Box sx={{ p: 3, display: "flex", alignItems: "center" }}>
-                <Box component={"img"} sx={{ width: 70 }} alt="cloudreve" src={"/static/img/cloudreve.svg"} />
+                <Box component={"img"} sx={{ width: 70 }} alt="StorFlow" src={"/static/img/brand/icon.svg"} />
                 <Box sx={{ ml: 2 }}>
                   <Typography variant={"h5"} fontWeight={600}>
-                    Cloudreve
+                    StorFlow
                     {summary && summary.version.pro && (
                       <SquareChip sx={{ ml: 1, height: "initial" }} size={"small"} color={"primary"} label={"Pro"} />
                     )}
@@ -329,7 +329,7 @@ const Home = () => {
               </Box>
               <Divider />
               <List component="nav" aria-label="main mailbox folders" sx={{ mx: 2 }}>
-                <ListItemButton onClick={() => window.open("https://cloudreve.org")}>
+                <ListItemButton onClick={() => window.open("/")}>
                   <ListItemIcon>
                     <HomeIcon />
                   </ListItemIcon>
@@ -338,7 +338,7 @@ const Home = () => {
                     <OpenFilled />
                   </StyledListItemIcon>
                 </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://github.com/cloudreve/cloudreve")}>
+                <ListItemButton onClick={() => window.open("https://github.com/Mxucc/StorFlow")}>
                   <ListItemIcon>
                     <GitHub />
                   </ListItemIcon>
@@ -347,7 +347,7 @@ const Home = () => {
                     <OpenFilled />
                   </StyledListItemIcon>
                 </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://docs.cloudreve.org/")}>
+                <ListItemButton onClick={() => window.open("https://github.com/Mxucc/StorFlow#readme")}>
                   <ListItemIcon>
                     <Book />
                   </ListItemIcon>
@@ -356,25 +356,7 @@ const Home = () => {
                     <OpenFilled />
                   </StyledListItemIcon>
                 </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://discord.gg/WTpMFpZT76")}>
-                  <ListItemIcon>
-                    <Discord />
-                  </ListItemIcon>
-                  <ListItemText primary={t("summary.discordCommunity")} />
-                  <StyledListItemIcon>
-                    <OpenFilled />
-                  </StyledListItemIcon>
-                </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://t.me/cloudreve_official")}>
-                  <ListItemIcon>
-                    <Telegram />
-                  </ListItemIcon>
-                  <ListItemText primary={t("summary.telegram")} />
-                  <StyledListItemIcon>
-                    <OpenFilled />
-                  </StyledListItemIcon>
-                </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://github.com/cloudreve/cloudreve/discussions")}>
+                <ListItemButton onClick={() => window.open("https://github.com/Mxucc/StorFlow/discussions")}>
                   <ListItemIcon>
                     <CommentMultiple />
                   </ListItemIcon>
@@ -383,14 +365,6 @@ const Home = () => {
                     <OpenFilled />
                   </StyledListItemIcon>
                 </ListItemButton>
-                {summary && !summary.version.pro && (
-                  <ListItemButton onClick={() => setProDialogOpen(true)}>
-                    <ListItemIcon>
-                      <SparkleFilled color={"primary"} />
-                    </ListItemIcon>
-                    <ListItemText primary={t("summary.buyPro")} />
-                  </ListItemButton>
-                )}
               </List>
               <Divider />
             </StyledPaper>
@@ -401,19 +375,18 @@ const Home = () => {
                 公告
               </Typography>
               <Divider sx={{ mb: 2, mt: 1 }} />
-              <Giscus
-                id="comments"
-                repo="cloudreve/cloudreve"
-                repoId="MDEwOlJlcG9zaXRvcnkxMjAxNTYwNzY="
-                mapping={"number"}
-                term={i18next.language == "zh-CN" ? "2170" : "2169"}
-                reactionsEnabled={"1"}
-                emitMetadata={"0"}
-                inputPosition={"bottom"}
-                theme={theme.palette.mode === "dark" ? "dark" : "light"}
-                lang={i18next.language == "zh-CN" ? "zh-CN" : "en"}
-                loading={"lazy"}
-              />
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, pt: 0.5 }}>
+                <Typography variant={"body2"} color={"text.secondary"}>
+                  StorFlow 是自托管的文件协作与分发平台：控制台、官网与小店共用同一套后端与账号体系。
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  <Chip size={"small"} label={summary ? `v${summary.version.version}` : "v-"} variant={"outlined"} />
+                  {summary?.version.commit && (
+                    <Chip size={"small"} label={`#${summary.version.commit}`} variant={"outlined"} />
+                  )}
+                  <Chip size={"small"} label={"GPL-3.0"} variant={"outlined"} />
+                </Box>
+              </Box>
             </StyledPaper>
           </Grid>
         </Grid>

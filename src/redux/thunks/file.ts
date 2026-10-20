@@ -1332,8 +1332,13 @@ function startBatchGetDirectLinks(files: FileResponse[]): AppThunk<Promise<Direc
     const allFiles: FileResponse[] = [];
     const currentUser = SessionManager.currentUserGroup();
     const batchLimit = currentUser?.direct_link_batch_size ?? 0;
+    // 目录直链（Pro）：用户组开启后，选中的目录直接生成一条打包直链，不再展开其内部文件。
+    const folderDirectLink = currentUser?.folder_direct_link ?? false;
+    const folderTargets = folderDirectLink ? files.filter((f) => f.type == FileType.folder) : [];
+    const fileTargets = folderDirectLink ? files.filter((f) => f.type != FileType.folder) : files;
+    allFiles.push(...folderTargets);
     await dispatch(
-      walk(files, async (children, relativePath) => {
+      walk(fileTargets, async (children, relativePath) => {
         const childFiles = children.filter((f) => f.type == FileType.file);
         allFiles.push(...childFiles);
         if (allFiles.length > batchLimit) {

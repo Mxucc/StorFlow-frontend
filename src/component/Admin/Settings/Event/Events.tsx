@@ -9,13 +9,23 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { AuditLogType } from "../../../../api/explorer";
-import { ProChip } from "../../../Pages/Setting/SettingForm";
-import ProDialog from "../../Common/ProDialog";
 import { NoMarginHelperText, SettingSection, SettingSectionContent } from "../Settings";
 import { SettingContext } from "../SettingWrapper";
+
+/**
+ * 事件记录配置（Pro「事件」功能的设置页）。
+ *
+ * 配置项 `audit_event_enabled` 保存**已启用**的事件名 JSON 数组：
+ * - 缺省（从未配置过）= 记录全部事件；
+ * - 显式数组（含空数组）= 只记录数组里的事件，空数组表示全部关闭。
+ *
+ * 后端在 `pkg/setting/provider.go` 的 `AuditEventEnabled` 中读取该项，并在写入
+ * 审计日志前判断（`service/explorer/audit.go`、`service/user/audit.go` 等）。
+ */
+export const auditEventSettingKey = "audit_event_enabled";
 
 // Categorize audit events
 export const eventCategories = {
@@ -128,71 +138,141 @@ export const getEventName = (eventType: number): string => {
   return Object.entries(AuditLogType).find(([_, value]) => value === eventType)?.[0] || `event_${eventType}`;
 };
 
+/** 全部事件名（把「全部启用」展开成显式清单时使用）。 */
+const allEventNames = Object.values(AuditLogType).map((type) => getEventName(type));
+
 const Events = () => {
   const { t } = useTranslation("dashboard");
   const { formRef, setSettings, values } = useContext(SettingContext);
-  const [proOpen, setProOpen] = useState(false);
 
-  const handleProClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setProOpen(true);
+  /**
+   * 已启用的事件名集合；`null` 表示「从未配置过」= 全部启用。
+   * 显式空数组在这里是空集合（全部关闭），与后端语义一致。
+   */
+  const enabledNames = useMemo<Set<string> | null>(() => {
+    const raw = (values[auditEventSettingKey] ?? "").trim();
+    if (raw === "") {
+      return null;
+    }
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return null;
+      }
+      return new Set(parsed.filter((name): name is string => typeof name === "string"));
+    } catch {
+      return null;
+    }
+  }, [values]);
+
+  const isEnabled = (eventType: number) => !enabledNames || enabledNames.has(getEventName(eventType));
+
+  const persist = (names: Set<string>) => {
+    // 归一化顺序，便于审阅；空集合表示「全部关闭」
+    const ordered = allEventNames.filter((name) => names.has(name));
+    setSettings({ [auditEventSettingKey]: JSON.stringify(ordered) });
+  };
+
+  const toggleEvent = (eventType: number, enabled: boolean) => {
+    const next = new Set(enabledNames ?? allEventNames);
+    const name = getEventName(eventType);
+    if (enabled) {
+      next.add(name);
+    } else {
+      next.delete(name);
+    }
+    persist(next);
+  };
+
+  const toggleCategory = (events: number[], enabled: boolean) => {
+    const next = new Set(enabledNames ?? allEventNames);
+    events.map(getEventName).forEach((name) => {
+      if (enabled) {
+        next.add(name);
+      } else {
+        next.delete(name);
+      }
+    });
+    persist(next);
+  };
+
+  const categoryState = (events: number[]) => {
+    const enabled = events.filter((eventType) => isEnabled(eventType)).length;
+    return {
+      checked: events.length > 0 && enabled === events.length,
+      indeterminate: enabled > 0 && enabled < events.length,
+    };
   };
 
   return (
     <Box component={"form"} ref={formRef} onSubmit={(e) => e.preventDefault()}>
-      <ProDialog open={proOpen} onClose={() => setProOpen(false)} />
       <Stack spacing={5}>
         <SettingSection>
-          <Typography variant="h6" sx={{ display: "flex", alignItems: "center" }}>
-            {t("settings.auditLog")} <ProChip label="Pro" color="primary" size="small" />
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant={"h6"}>{t("settings.auditLog")}</Typography>
+          <Typography variant={"body2"} color={"text.secondary"} sx={{ mb: 1 }}>
             {t("settings.auditLogDes")}
           </Typography>
+          <NoMarginHelperText>{t("settings.auditLogAllHint")}</NoMarginHelperText>
 
-          {Object.entries(eventCategories).map(([categoryKey, category]) => (
-            <SettingSection key={categoryKey} onClick={handleProClick}>
-              <Box>
-                <Typography variant="subtitle1">{t(category.title)}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t(category.description)}
-                </Typography>
-              </Box>
+          {Object.entries(eventCategories).map(([categoryKey, category]) => {
+            const state = categoryState(category.events);
+            return (
+              <SettingSection key={categoryKey}>
+                <Box>
+                  <Typography variant={"subtitle1"}>{t(category.title)}</Typography>
+                  <Typography variant={"body2"} color={"text.secondary"}>
+                    {t(category.description)}
+                  </Typography>
+                </Box>
 
-              <SettingSectionContent>
-                <FormControl component="fieldset">
-                  <FormGroup>
-                    <FormControlLabel
-                      slotProps={{
-                        typography: {
-                          variant: "body2",
-                        },
-                      }}
-                      control={<Checkbox size={"small"} checked={false} />}
-                      label={t("settings.toggleAll")}
-                    />
-                    <NoMarginHelperText>{t("settings.toggleAllDes")}</NoMarginHelperText>
-                  </FormGroup>
-                </FormControl>
-                <Grid container spacing={1}>
-                  {category.events.map((eventType) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={eventType}>
+                <SettingSectionContent>
+                  <FormControl component={"fieldset"}>
+                    <FormGroup>
                       <FormControlLabel
                         slotProps={{
                           typography: {
                             variant: "body2",
                           },
                         }}
-                        control={<Checkbox size={"small"} checked={false} />}
-                        label={t(`settings.event.${getEventName(eventType)}`, getEventName(eventType))}
+                        control={
+                          <Checkbox
+                            size={"small"}
+                            checked={state.checked}
+                            indeterminate={state.indeterminate}
+                            onChange={(e) => toggleCategory(category.events, e.target.checked)}
+                          />
+                        }
+                        label={t("settings.toggleAll")}
                       />
-                    </Grid>
-                  ))}
-                </Grid>
-              </SettingSectionContent>
-              <Divider sx={{ mt: 1 }} />
-            </SettingSection>
-          ))}
+                      <NoMarginHelperText>{t("settings.toggleAllDes")}</NoMarginHelperText>
+                    </FormGroup>
+                  </FormControl>
+                  <Grid container spacing={1}>
+                    {category.events.map((eventType) => (
+                      <Grid item xs={12} sm={6} md={4} lg={3} key={eventType}>
+                        <FormControlLabel
+                          slotProps={{
+                            typography: {
+                              variant: "body2",
+                            },
+                          }}
+                          control={
+                            <Checkbox
+                              size={"small"}
+                              checked={isEnabled(eventType)}
+                              onChange={(e) => toggleEvent(eventType, e.target.checked)}
+                            />
+                          }
+                          label={t(`settings.event.${getEventName(eventType)}`, getEventName(eventType))}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </SettingSectionContent>
+                <Divider sx={{ mt: 1 }} />
+              </SettingSection>
+            );
+          })}
         </SettingSection>
       </Stack>
     </Box>

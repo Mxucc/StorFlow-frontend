@@ -7,6 +7,7 @@ import { useAppSelector } from "../../../redux/hooks.ts";
 import SessionManager from "../../../session";
 import { GroupBS } from "../../../session/utils.ts";
 import FacebookCircularProgress from "../../Common/CircularProgress.tsx";
+import SiteAnnouncement from "../../Common/SiteAnnouncement.tsx";
 import { PageVariant, PageVariantContext } from "../NavBarFrame.tsx";
 import { DrawerHeaderContainer } from "./DrawerHeader.tsx";
 
@@ -48,6 +49,20 @@ const AppMain = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // 应用外壳自己管理滚动（内部滚动容器 + 固定视口高度），因此在桌面端隐藏 body 的纵向滚动，
+  // 避免出现两条滚动条。**只在外壳挂载期间生效**：公开页面（店铺前台 / 登录页）走
+  // ShopFrame / HeadlessFrame，不进这个组件，body 保持可滚动，否则滚轮与触控板都翻不动页面。
+  useEffect(() => {
+    if (isMobile) {
+      return;
+    }
+    const previous = document.body.style.overflowY;
+    document.body.style.overflowY = "hidden";
+    return () => {
+      document.body.style.overflowY = previous;
+    };
+  }, [isMobile]);
+
   return (
     <Box
       sx={(theme) => ({
@@ -75,6 +90,7 @@ const AppMain = () => {
       component={"main"}
     >
       <DrawerHeaderContainer />
+      <SiteAnnouncement />
       <SwitchTransition>
         <CSSTransition
           addEndListener={(node, done) => node.addEventListener("transitionend", done, false)}

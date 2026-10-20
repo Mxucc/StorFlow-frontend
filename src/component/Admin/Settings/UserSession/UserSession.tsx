@@ -1,4 +1,14 @@
-import { Box, FormControl, FormControlLabel, Link, ListItemText, Stack, Switch, Typography } from "@mui/material";
+import {
+  Box,
+  Collapse,
+  FormControl,
+  FormControlLabel,
+  Link,
+  ListItemText,
+  Stack,
+  Switch,
+  Typography,
+} from "@mui/material";
 import { useContext, useMemo } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
@@ -6,7 +16,7 @@ import { isTrueVal } from "../../../../session/utils.ts";
 import SizeInput from "../../../Common/SizeInput.tsx";
 import { DenseFilledTextField, DenseSelect } from "../../../Common/StyledComponents.tsx";
 import { SquareMenuItem } from "../../../FileManager/ContextMenu/ContextMenu.tsx";
-import SettingForm, { ProChip } from "../../../Pages/Setting/SettingForm.tsx";
+import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
 import { Code } from "../../../Common/Code.tsx";
 import GroupSelectionInput from "../../Common/GroupSelectionInput.tsx";
 import SharesInput from "../../Common/SharesInput.tsx";
@@ -127,9 +137,12 @@ const UserSession = () => {
                 <NoMarginHelperText>{t("settings.defaultGroupDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
-            <SettingForm title={t("settings.defaultSymbolics")} lgWidth={5} pro>
-              <FormControl>
-                <SharesInput />
+            <SettingForm title={t("settings.defaultSymbolics")} lgWidth={5}>
+              <FormControl fullWidth>
+                <SharesInput
+                  value={defaultSymbolics}
+                  onChange={(shares) => setSettings({ default_symbolics: JSON.stringify(shares) })}
+                />
                 <NoMarginHelperText>
                   <Trans
                     i18nKey="settings.defaultSymbolicsDes"
@@ -139,36 +152,51 @@ const UserSession = () => {
                 </NoMarginHelperText>
               </FormControl>
             </SettingForm>
-            <SettingForm title={t("vas.filterEmailProvider")} lgWidth={5} pro>
+            <SettingForm title={t("vas.filterEmailProvider")} lgWidth={5}>
               <FormControl>
-                <DenseSelect value={0}>
-                  {["filterEmailProviderDisabled", "filterEmailProviderWhitelist", "filterEmailProviderBlacklist"].map(
-                    (v, i) => (
-                      <SquareMenuItem value={i.toString()}>
-                        <ListItemText
-                          slotProps={{
-                            primary: { variant: "body2" },
-                          }}
-                        >
-                          {t(`vas.${v}`)}
-                        </ListItemText>
-                      </SquareMenuItem>
-                    ),
-                  )}
+                <DenseSelect
+                  value={values.filter_email_provider ?? "disabled"}
+                  onChange={(e) => setSettings({ filter_email_provider: e.target.value as string })}
+                >
+                  {["Disabled", "Whitelist", "Blacklist"].map((v) => (
+                    <SquareMenuItem value={v.toLowerCase()} key={v}>
+                      <ListItemText
+                        slotProps={{
+                          primary: { variant: "body2" },
+                        }}
+                      >
+                        {t(`vas.filterEmailProvider${v}`)}
+                      </ListItemText>
+                    </SquareMenuItem>
+                  ))}
                 </DenseSelect>
                 <NoMarginHelperText>{t("vas.filterEmailProviderDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
-            <SettingForm lgWidth={5} pro>
+            <Collapse
+              in={values.filter_email_provider === "whitelist" || values.filter_email_provider === "blacklist"}
+              unmountOnExit
+            >
+              <SettingForm title={t("vas.filterEmailProviderRule")} lgWidth={5}>
+                <FormControl fullWidth>
+                  <DenseFilledTextField
+                    value={values.filter_email_provider_rule ?? ""}
+                    onChange={(e) => setSettings({ filter_email_provider_rule: e.target.value })}
+                  />
+                  <NoMarginHelperText>{t("vas.filterEmailProviderRuleDes")}</NoMarginHelperText>
+                </FormControl>
+              </SettingForm>
+            </Collapse>
+            <SettingForm lgWidth={5}>
               <FormControl fullWidth>
                 <FormControlLabel
-                  control={<Switch checked={false} />}
-                  label={
-                    <>
-                      {t("vas.disableSubAddressEmail")}
-                      <ProChip label="Pro" color="primary" size="small" />
-                    </>
+                  control={
+                    <Switch
+                      checked={isTrueVal(values.disable_sub_address_email)}
+                      onChange={(e) => setSettings({ disable_sub_address_email: e.target.checked ? "1" : "0" })}
+                    />
                   }
+                  label={t("vas.disableSubAddressEmail")}
                 />
                 <NoMarginHelperText>
                   <Trans i18nKey="vas.disableSubAddressEmailDes" ns={"dashboard"} components={[<Code />]} />
@@ -178,8 +206,8 @@ const UserSession = () => {
           </SettingSectionContent>
         </SettingSection>
         <SettingSection>
-          <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
-            {t("settings.thirdPartySignIn")} <ProChip label="Pro" color="primary" size="small" />
+          <Typography variant="h6" gutterBottom>
+            {t("settings.thirdPartySignIn")}
           </Typography>
           <SettingSectionContent>
             <SettingForm lgWidth={5}>

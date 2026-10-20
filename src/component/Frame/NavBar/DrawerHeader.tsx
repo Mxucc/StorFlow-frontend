@@ -15,6 +15,11 @@ export const DrawerHeaderContainer = styled("div")(({ theme }) => ({
   justifyContent: "flex-end",
 }));
 
+/**
+ * 侧边栏品牌区：左侧是 StorFlow 标识，鼠标悬停时右侧浮出折叠按钮。
+ *
+ * 面板是深色的，Logo 会通过嵌套主题自动切到浅色版本（见 AppDrawer）。
+ */
 const DrawerHeader = ({ disabled }: { disabled?: boolean }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -27,13 +32,33 @@ const DrawerHeader = ({ disabled }: { disabled?: boolean }) => {
     <DrawerHeaderContainer
       onMouseEnter={() => setShowCollapse(disabled ? false : true)}
       onMouseLeave={() => setShowCollapse(false)}
+      sx={{
+        px: 2,
+        justifyContent: "space-between",
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        position: "relative",
+        zIndex: 1,
+      }}
     >
-      <Box sx={{ width: "100%", pl: 2, cursor: "pointer" }} onClick={() => navigate("/home")}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          minWidth: 0,
+          cursor: "pointer",
+          borderRadius: 2,
+          px: 0.5,
+          mx: -0.5,
+          transition: "background-color 160ms ease",
+          "&:hover": { backgroundColor: "action.hover" },
+        }}
+        onClick={() => navigate("/home")}
+      >
         <Logo
           sx={{
             height: "auto",
-            maxWidth: 160,
-            maxHeight: 35,
+            maxWidth: 156,
+            maxHeight: 28,
             width: "100%",
             objectPosition: "left",
             objectFit: "contain",
@@ -43,8 +68,8 @@ const DrawerHeader = ({ disabled }: { disabled?: boolean }) => {
       {!isMobile && (
         <Box>
           <Fade in={showCollapse}>
-            <IconButton onClick={() => dispatch(setDrawerOpen(false))}>
-              <ChevronLeft />
+            <IconButton size={"small"} onClick={() => dispatch(setDrawerOpen(false))}>
+              <ChevronLeft fontSize={"small"} />
             </IconButton>
           </Fade>
         </Box>

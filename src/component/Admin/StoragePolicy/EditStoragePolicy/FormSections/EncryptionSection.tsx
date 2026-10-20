@@ -25,7 +25,7 @@ const EncryptionSection = () => {
     <SettingSection>
       <Box display="flex" alignItems="center" gap={1}>
         <Typography variant="h6">{t("policy.fileEncryption")}</Typography>
-        <IconButton onClick={() => window.open("https://docs.cloudreve.org/usage/file-encryption", "_blank")}>
+        <IconButton onClick={() => window.open("https://github.com/Mxucc/StorFlow", "_blank")}>
           <QuestionCircle />
         </IconButton>
       </Box>

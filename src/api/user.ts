@@ -31,11 +31,19 @@ export interface Group {
   permission?: string;
   direct_link_batch_size?: number;
   trash_retention?: number;
+  /** 用户组是否允许为目录生成直链（Pro: 目录直链） */
+  folder_direct_link?: boolean;
+  /** 允许组内用户创建任务时自行选择节点（Pro: 允许选择节点） */
+  allow_select_node?: boolean;
+  /** 用户组可用的任务处理节点 ID 列表（Pro: 可用节点） */
+  allowed_nodes?: number[];
 }
 
 export interface PinedFile {
   uri: string;
   name?: string;
+  // locked 为 true 表示该置顶项来自用户组默认置顶（Pro: 默认固定分享），用户无法取消。
+  locked?: boolean;
 }
 
 export interface PrepareLoginResponse {
@@ -43,6 +51,29 @@ export interface PrepareLoginResponse {
   sso_enabled: boolean;
   password_enabled: boolean;
   qq_enabled: boolean;
+}
+
+/**
+ * QQSSOConfig 是 QQ 互联登录的公开配置（不含 app_secret），来自 GET /session/sso
+ */
+export interface QQSSOConfig {
+  enabled: boolean;
+  display_name: string;
+  auto_redirect: boolean;
+  authorize_url: string;
+}
+
+/**
+ * SSOConfig 站点 SSO 配置，来自 GET /session/sso
+ */
+export interface SSOConfig {
+  enabled: boolean;
+  display_name: string;
+  auto_redirect: boolean;
+  password_login_disabled: boolean;
+  authorize_url: string;
+  // qq 为 QQ 互联登录配置，未启用或旧版后端可能不返回。
+  qq?: QQSSOConfig;
 }
 
 export interface CaptchaRequest {
@@ -89,9 +120,15 @@ export const GroupPermission = {
   archive_task: 5,
   webdav_proxy: 6,
   share_download: 7,
+  /** 无需购买分享链接（Pro）：可直接打开付费分享 */
+  share_free: 8,
   remote_download: 9,
+  /** 存储策略转移（Pro）：可为自己创建迁移任务 */
+  migrate_policy: 10,
   redirected_source: 11,
   advance_delete: 12,
+  /** 提升匿名用户权限（Pro）：可为匿名访客赋予读写权限 */
+  escalate_anonymity: 13,
   unique_direct_link: 17,
 };
 
@@ -193,6 +230,8 @@ export interface SignUpService extends CaptchaRequest {
   email: string;
   password: string;
   language: string;
+  /** 邀请码：来自 /shop/<slug>?ref=<code> 或分享链接，注册时透传以绑定返利关系 */
+  ref?: string;
 }
 
 export interface SendResetEmailService extends CaptchaRequest {

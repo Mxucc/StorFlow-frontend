@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import { App } from "../App.tsx";
 import ErrorBoundary from "../component/Common/ErrorBoundary.tsx";
 import HeadlessFrame from "../component/Frame/HeadlessFrame.tsx";
@@ -11,7 +11,17 @@ import DesktopCallback from "../component/Pages/Login/Signin/DesktopCallback.tsx
 import MobileCallback from "../component/Pages/Login/Signin/MobileCallback.tsx";
 import SignIn from "../component/Pages/Login/Signin/SignIn.tsx";
 import SignUp from "../component/Pages/Login/Signup.tsx";
+import OIDCCallback from "../component/Pages/Login/OIDCCallback.tsx";
 import NoMatch from "../component/Pages/NoMatch.tsx";
+
+/**
+ * The SPA login page lives at `/session`. The OIDC backend redirects to `/login`
+ * on failure, so keep an alias that preserves the query string (`sso_error`).
+ */
+const LoginRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={`/session${location.search}`} replace />;
+};
 
 export const router = createBrowserRouter([
   {
@@ -67,6 +77,37 @@ export const router = createBrowserRouter([
           {
             path: "ios",
             element: <MobileCallback />,
+          },
+        ],
+      },
+      {
+        path: "/oidc/callback",
+        element: <OIDCCallback />,
+      },
+      {
+        path: "/login",
+        element: <LoginRedirect />,
+      },
+      {
+        path: "/shop",
+        async lazy() {
+          let { default: ShopFrame } = await import("../component/Frame/ShopFrame.tsx");
+          return { Component: ShopFrame };
+        },
+        children: [
+          {
+            path: ":slug",
+            async lazy() {
+              let { default: ShopStorefront } = await import("../component/Pages/Shop/ShopStorefront.tsx");
+              return { Component: ShopStorefront };
+            },
+          },
+          {
+            path: ":slug/product/:id",
+            async lazy() {
+              let { default: ShopProductDetail } = await import("../component/Pages/Shop/ShopProductDetail.tsx");
+              return { Component: ShopProductDetail };
+            },
           },
         ],
       },
@@ -211,6 +252,34 @@ export const router = createBrowserRouter([
                   return { Component: FileSystem };
                 },
               },
+              {
+                path: "shop",
+                async lazy() {
+                  let { ShopSetting } = await import("../component/Admin/AdminBundle.tsx");
+                  return { Component: ShopSetting };
+                },
+              },
+              {
+                path: "event",
+                async lazy() {
+                  let { EventList } = await import("../component/Admin/AdminBundle.tsx");
+                  return { Component: EventList };
+                },
+              },
+              {
+                path: "abuse",
+                async lazy() {
+                  let { AbuseList } = await import("../component/Admin/AdminBundle.tsx");
+                  return { Component: AbuseList };
+                },
+              },
+              {
+                path: "payment",
+                async lazy() {
+                  let { PaymentList } = await import("../component/Admin/AdminBundle.tsx");
+                  return { Component: PaymentList };
+                },
+              },
             ],
           },
           {
@@ -239,6 +308,45 @@ export const router = createBrowserRouter([
             async lazy() {
               let { ShareList } = await import("../component/Pages/Pages");
               return { Component: ShareList };
+            },
+          },
+          {
+            path: "/shop/manage",
+            async lazy() {
+              let { ShopManage } = await import("../component/Pages/Pages");
+              return { Component: ShopManage };
+            },
+          },
+          {
+            path: "/shop/purchases",
+            async lazy() {
+              let { ShopPurchases } = await import("../component/Pages/Pages");
+              return { Component: ShopPurchases };
+            },
+          },
+          {
+            path: "/shop/orders",
+            element: <Navigate to={"/shop/purchases"} />,
+          },
+          {
+            path: "/shop/order/:orderNo",
+            async lazy() {
+              let { ShopOrder } = await import("../component/Pages/Pages");
+              return { Component: ShopOrder };
+            },
+          },
+          {
+            path: "/store",
+            async lazy() {
+              let { Store } = await import("../component/Pages/Pages");
+              return { Component: Store };
+            },
+          },
+          {
+            path: "/vas/payment/status/:orderNo",
+            async lazy() {
+              let { StorePaymentStatus } = await import("../component/Pages/Pages");
+              return { Component: StorePaymentStatus };
             },
           },
           {

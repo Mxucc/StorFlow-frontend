@@ -140,6 +140,8 @@ export const Code = {
   BatchOperationNotFullyCompleted: 40081,
   DomainNotLicensed: 40087,
   AnonymouseAccessDenied: 40088,
+  /** 需要购买该付费分享（网盘小店） */
+  PurchaseRequired: 40083,
   CodeLoginRequired: 401,
   PermissionDenied: 403,
   NodeFound: 404,

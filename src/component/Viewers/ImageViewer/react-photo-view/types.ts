@@ -34,7 +34,7 @@ export interface DataType {
    */
   originRef?: React.MutableRefObject<HTMLElement | null>;
 
-  // Cloudreve specific
+  // StorFlow specific
   file?: FileResponse;
   version?: string;
 

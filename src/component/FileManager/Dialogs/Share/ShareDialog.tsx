@@ -1,6 +1,7 @@
 import { Box, Checkbox, Collapse, DialogContent, IconButton, Stack, Tooltip, useTheme } from "@mui/material";
 import dayjs from "dayjs";
 import { TFunction } from "i18next";
+import { useSnackbar } from "notistack";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -10,6 +11,7 @@ import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
 import { createOrUpdateShareLink } from "../../../../redux/thunks/share.ts";
 import { copyToClipboard, sendLink } from "../../../../util";
 import AutoHeight from "../../../Common/AutoHeight.tsx";
+import { DefaultCloseAction } from "../../../Common/Snackbar/snackbar.tsx";
 import { FilledTextField, SmallFormControlLabel } from "../../../Common/StyledComponents.tsx";
 import DraggableDialog from "../../../Dialogs/DraggableDialog.tsx";
 import CopyOutlined from "../../../Icons/CopyOutlined.tsx";
@@ -20,6 +22,9 @@ import ShareSettingContent, { downloadOptions, expireOptions, ShareSetting } fro
 const initialSetting: ShareSetting = {
   expires_val: expireOptions[2],
   downloads_val: downloadOptions[0],
+  pay_enabled: false,
+  price: 0,
+  is_default: false,
 };
 
 interface ShareLinkPassword {
@@ -35,6 +40,9 @@ const shareToSetting = (share: ShareModel, t: TFunction): ShareSetting => {
     share_view: share.share_view,
     show_readme: share.show_readme,
     downloads: share.remain_downloads != undefined && share.remain_downloads > 0,
+    pay_enabled: share.pay_enabled ?? false,
+    price: share.price ?? 0,
+    is_default: share.is_default ?? false,
 
     expires_val: expireOptions[2],
     downloads_val: downloadOptions[0],
@@ -61,13 +69,13 @@ const shareToSetting = (share: ShareModel, t: TFunction): ShareSetting => {
       res.expires = false;
     }
   }
-
   return res;
 };
 
 const ShareDialog = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
 
   const [loading, setLoading] = useState(false);
@@ -116,6 +124,15 @@ const ShareDialog = () => {
 
       if (shareLink) {
         copyToClipboard(shareLink);
+        return;
+      }
+
+      if (setting.pay_enabled && (!setting.price || setting.price < 1)) {
+        enqueueSnackbar({
+          message: t("application:modals.payPriceRequired"),
+          variant: "warning",
+          action: DefaultCloseAction,
+        });
         return;
       }
 

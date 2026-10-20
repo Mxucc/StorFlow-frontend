@@ -214,7 +214,7 @@ const CapCaptcha = ({ onStateChange, generation, fullWidth, ...rest }: CapProps 
         // Container full width when needed
         ...(fullWidth && { width: "100%" }),
 
-        // CSS variables for Cloudreve theme adaptation
+        // CSS variables mapped from the MUI theme
         "& cap-widget": {
           "--cap-border-radius": `${theme.shape.borderRadius}px`,
           "--cap-background": theme.palette.background.paper,

@@ -2,12 +2,17 @@ import { AxiosProgressEvent, CancelToken } from "axios";
 import { EncryptedBlob } from "../component/Uploader/core/uploader/encrypt/blob.ts";
 import i18n from "../i18n.ts";
 import {
+  AbuseHandleService,
+  AbuseReport,
   AdminListGroupResponse,
   AdminListService,
+  AuditCleanupService,
   ListShareResponse as AdminListShareResponse,
   StoragePolicy as AdminStoragePolicy,
   BatchIDService,
   CleanupTaskService,
+  CreateGiftCodeResponse,
+  CreateGiftCodeService,
   CreateStoragePolicyCorsService,
   Entity,
   FetchWOPIDiscoveryService,
@@ -18,16 +23,23 @@ import {
   GetSettingService,
   GroupEnt,
   HomepageSummary,
+  ListAbuseReportResponse,
+  ListAuditLogResponse,
   ListEntityResponse,
   ListFileResponse,
+  ListGiftCodeResponse,
   ListNodeResponse,
   ListOAuthClientResponse,
+  ListPaymentResponse,
   ListStoragePolicyResponse,
   ListTaskResponse,
   ListUserResponse,
   Node,
   OauthCredentialStatus,
+  Payment,
   QueueMetric,
+  SaveVASProvidersService,
+  SaveVASSKUsService,
   SetSettingService,
   Share as ShareEnt,
   Task,
@@ -42,6 +54,8 @@ import {
   UpsertStoragePolicyService,
   UpsertUserService,
   User as UserEnt,
+  VASProvider,
+  VASSKU,
 } from "./dashboard.ts";
 import {
   ArchiveListFilesResponse,
@@ -96,6 +110,7 @@ import {
   ResetPasswordService,
   SendResetEmailService,
   SignUpService,
+  SSOConfig,
   Token,
   TwoFALoginRequest,
   User,
@@ -103,6 +118,7 @@ import {
 } from "./user.ts";
 import {
   ArchiveWorkflowService,
+  AvailableNode,
   DownloadWorkflowService,
   ImportWorkflowService,
   ListTaskService,
@@ -146,6 +162,24 @@ export function sendPrepareLogin(email: string): ThunkResponse<PrepareLoginRespo
           ...defaultOpts,
           noCredential: true,
           bypassSnackbar: (e) => e instanceof AppError && e.code == Code.NodeFound,
+        },
+      ),
+    );
+  };
+}
+
+export function getSSOConfig(): ThunkResponse<SSOConfig> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/session/sso",
+        {
+          method: "GET",
+        },
+        {
+          ...defaultOpts,
+          noCredential: true,
+          bypassSnackbar: () => true,
         },
       ),
     );
@@ -847,6 +881,23 @@ export function sendExtractArchive(req: ArchiveWorkflowService): ThunkResponse<T
         {
           data: req,
           method: "POST",
+        },
+        {
+          ...defaultOpts,
+        },
+      ),
+    );
+  };
+}
+
+// 获取当前用户可用于处理任务的节点列表（用户组未开启「允许选择节点」时返回空数组）
+export function getAvailableNodes(): ThunkResponse<{ nodes: AvailableNode[] }> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/workflow/nodes",
+        {
+          method: "GET",
         },
         {
           ...defaultOpts,
@@ -2063,7 +2114,7 @@ export function sendConsentOauthApp(args: GrantService, deny = false): ThunkResp
       send(
         `/session/oauth/consent${deny ? "/deny" : ""}`,
         { method: "POST", data: args },
-        { bypassSnackbar: (e) => true, ...defaultOpts },
+        { bypassSnackbar: () => true, ...defaultOpts },
       ),
     );
   };
@@ -2188,6 +2239,280 @@ export function sendRebuildFTSIndex(req: RebuildFTSIndexWorkflowService): ThunkR
         },
         {
           ...defaultOpts,
+        },
+      ),
+    );
+  };
+}
+
+// ─── Pro 能力：事件（审计日志） / 滥用举报 / 增值服务订单 ──────────────────────
+
+/**
+ * 事件列表（`POST /admin/event`）。
+ *
+ * `conditions` 支持 `audit_user`（用户 hash id 或数字 id）与
+ * `audit_action` / `type`（事件名或数字类型），`order_by` 支持 `created_at` / `type`。
+ */
+export function getAuditLogList(args: AdminListService): ThunkResponse<ListAuditLogResponse> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/event",
+        {
+          data: args,
+          method: "POST",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 批量删除事件。 */
+export function batchDeleteAuditLog(args: BatchIDService): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/event/batch/delete",
+        {
+          data: args,
+          method: "POST",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 按类型 + 天数清理事件（`before_days` 天之前的事件会被删除）。 */
+export function cleanupAuditLog(args: AuditCleanupService): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/event/cleanup",
+        {
+          data: args,
+          method: "POST",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 滥用举报列表（`POST /admin/abuse`，`conditions.status` 过滤状态）。 */
+export function getAbuseReportList(args: AdminListService): ThunkResponse<ListAbuseReportResponse> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/abuse",
+        {
+          data: args,
+          method: "POST",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 处理一条举报：标记为已处理 / 已驳回，并记录处理备注。 */
+export function handleAbuseReport(id: number, body: AbuseHandleService): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        `/admin/abuse/${id}`,
+        {
+          data: body,
+          method: "POST",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 批量删除举报记录。 */
+export function batchDeleteAbuseReports(args: BatchIDService): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/abuse/batch/delete",
+        {
+          data: args,
+          method: "POST",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/**
+ * 增值服务订单列表（`POST /admin/payment`）。
+ *
+ * 注意：该接口的分页参数走 **query**（`page` / `page_size` / `status`），
+ * 不使用请求体。
+ */
+export function getPaymentList(args: AdminListService, status?: string): ThunkResponse<ListPaymentResponse> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/payment",
+        {
+          method: "POST",
+          params: {
+            page: args.page,
+            page_size: args.page_size,
+            status: status ?? "",
+          },
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 批量删除订单记录。 */
+export function batchDeletePayments(args: BatchIDService): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/payment/batch/delete",
+        {
+          data: args,
+          method: "POST",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 增值服务商品列表（`GET /admin/vas/skus`）。 */
+export function getVASSKUs(): ThunkResponse<VASSKU[]> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/vas/skus",
+        {
+          method: "GET",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 覆盖保存增值服务商品列表（`POST /admin/vas/skus`）。 */
+export function saveVASSKUs(args: SaveVASSKUsService): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/vas/skus",
+        {
+          data: args,
+          method: "POST",
+        },
+        {
+          ...defaultOpts,
+          errorSnackbarMsg: (e) => i18n.t("vas.saveFailed", { ns: "dashboard" }) + ": " + e.message,
+        },
+      ),
+    );
+  };
+}
+
+/** 支付渠道列表（`GET /admin/vas/providers`）。 */
+export function getVASProviders(): ThunkResponse<VASProvider[]> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/vas/providers",
+        {
+          method: "GET",
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 覆盖保存支付渠道列表（`POST /admin/vas/providers`）。 */
+export function saveVASProviders(args: SaveVASProvidersService): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/vas/providers",
+        {
+          data: args,
+          method: "POST",
+        },
+        {
+          ...defaultOpts,
+          errorSnackbarMsg: (e) => i18n.t("vas.saveFailed", { ns: "dashboard" }) + ": " + e.message,
+        },
+      ),
+    );
+  };
+}
+
+/**
+ * 兑换码列表（`GET /admin/vas/giftcode`）。
+ *
+ * 分页与筛选参数走 query：`page` / `page_size` / `used`。
+ */
+export function getVASGiftCodes(args: AdminListService, used?: boolean): ThunkResponse<ListGiftCodeResponse> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/vas/giftcode",
+        {
+          method: "GET",
+          params: {
+            page: args.page,
+            page_size: args.page_size,
+            ...(used === undefined ? {} : { used }),
+          },
+        },
+        defaultOpts,
+      ),
+    );
+  };
+}
+
+/** 批量生成兑换码（`POST /admin/vas/giftcode`）。 */
+export function createVASGiftCodes(args: CreateGiftCodeService): ThunkResponse<CreateGiftCodeResponse> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/vas/giftcode",
+        {
+          data: args,
+          method: "POST",
+        },
+        {
+          ...defaultOpts,
+          errorSnackbarMsg: (e) => i18n.t("vas.saveFailed", { ns: "dashboard" }) + ": " + e.message,
+        },
+      ),
+    );
+  };
+}
+
+/** 批量删除兑换码（`POST /admin/vas/giftcode/batch/delete`）。 */
+export function deleteVASGiftCodes(args: BatchIDService): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        "/admin/vas/giftcode/batch/delete",
+        {
+          data: args,
+          method: "POST",
+        },
+        {
+          ...defaultOpts,
+          errorSnackbarMsg: (e) => i18n.t("vas.saveFailed", { ns: "dashboard" }) + ": " + e.message,
         },
       ),
     );

@@ -10,12 +10,14 @@ import { openFileContextMenu } from "../../../redux/thunks/file.ts";
 import { loadChild, navigateToPath } from "../../../redux/thunks/filemanager.ts";
 import { unPinFromSidebar } from "../../../redux/thunks/settings.ts";
 import { mergeRefs } from "../../../util";
+import SessionManager from "../../../session";
 import FacebookCircularProgress from "../../Common/CircularProgress.tsx";
 import { NoWrapTypography } from "../../Common/StyledComponents.tsx";
 import NavIconTransition from "../../Frame/NavBar/NavIconTransition.tsx";
 import { SideNavItemBase } from "../../Frame/NavBar/SideNavItem.tsx";
 import CaretDown from "../../Icons/CaretDown.tsx";
 import Dismiss from "../../Icons/Dismiss.tsx";
+import LockClosedOutlined from "../../Icons/LockClosedOutlined.tsx";
 import { useFileDrag } from "../Dnd/DndWrappedFile.tsx";
 import FileIcon from "../Explorer/FileIcon.tsx";
 import { FmIndexContext } from "../FmIndexContext.tsx";
@@ -112,6 +114,24 @@ const UnpinButton = (props: UnpinButton) => {
   );
 };
 
+interface LockedPinButton {
+  show: boolean;
+}
+// 用户组默认置顶的分享不可取消，只显示锁图标。
+const LockedPinButton = (props: LockedPinButton) => {
+  const { t } = useTranslation("dashboard");
+
+  return (
+    <Fade in={props.show} unmountOnExit>
+      <Tooltip title={t("group.defaultPinned")}>
+        <SmallIconButton size="small" disabled>
+          <LockClosedOutlined fontSize={"inherit"} />
+        </SmallIconButton>
+      </Tooltip>
+    </Fade>
+  );
+};
+
 const CustomContent = React.memo(
   React.forwardRef(function CustomContent(props: CustomContentProps, ref) {
     const dispatch = useAppDispatch();
@@ -131,6 +151,18 @@ const CustomContent = React.memo(
 
       return nodeId;
     }, [nodeId]);
+
+    // 用户组默认置顶的分享（Pro: 默认固定分享）不允许用户取消置顶。
+    const lockedPin = useMemo(() => {
+      if (!props.pinned) {
+        return false;
+      }
+      try {
+        return !!SessionManager.currentLogin().user.pined?.find((p) => p.uri === uri)?.locked;
+      } catch (e) {
+        return false;
+      }
+    }, [props.pinned, uri]);
 
     const icon = iconProp || expansionIcon || displayIcon;
 
@@ -274,7 +306,7 @@ const CustomContent = React.memo(
         </div>
         {FileItemIcon}
         {fileName}
-        <UnpinButton show={showDelete} uri={uri} />
+        {lockedPin ? <LockedPinButton show={showDelete} /> : <UnpinButton show={showDelete} uri={uri} />}
       </CustomContentRoot>
     );
   }),

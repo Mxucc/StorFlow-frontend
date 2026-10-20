@@ -9,10 +9,14 @@ import { useAppSelector } from "../../../redux/hooks.ts";
 import SessionManager from "../../../session";
 import { GroupBS } from "../../../session/utils.ts";
 import ProDialog from "../../Admin/Common/ProDialog.tsx";
+import BuildingShop from "../../Icons/BuildingShop.tsx";
+import BuildingShopFilled from "../../Icons/BuildingShopFilled.tsx";
+import Cart from "../../Icons/Cart.tsx";
 import BoxMultiple from "../../Icons/BoxMultiple.tsx";
 import BoxMultipleFilled from "../../Icons/BoxMultipleFilled.tsx";
 import CloudDownload from "../../Icons/CloudDownload.tsx";
 import CloudDownloadOutlined from "../../Icons/CloudDownloadOutlined.tsx";
+import CoinStack from "../../Icons/CoinStack.tsx";
 import CubeSync from "../../Icons/CubeSync.tsx";
 import CubeSyncFilled from "../../Icons/CubeSyncFilled.tsx";
 import CubeTree from "../../Icons/CubeTree.tsx";
@@ -63,6 +67,21 @@ NavigationItems = [
     label: "navbar.myShare",
     icon: [ShareAndroid, ShareOutlined],
     path: "/shares",
+  },
+  {
+    label: "navbar.myShop",
+    icon: [BuildingShopFilled, BuildingShop],
+    path: "/shop/manage",
+  },
+  {
+    label: "navbar.myPurchases",
+    icon: [Cart, Cart],
+    path: "/shop/purchases",
+  },
+  {
+    label: "navbar.store",
+    icon: [CoinStack, CoinStack],
+    path: "/store",
   },
 ];
 
@@ -203,6 +222,11 @@ AdminNavigationItems = [
     path: "/admin/share",
   },
   {
+    label: "dashboard:nav.shop",
+    icon: [BuildingShopFilled, BuildingShop],
+    path: "/admin/shop",
+  },
+  {
     label: "dashboard:nav.tasks",
     icon: [CubeSyncFilled, CubeSync],
     path: "/admin/task",
@@ -211,19 +235,16 @@ AdminNavigationItems = [
     label: "dashboard:vas.orders",
     icon: [PaymentFilled, Payment],
     path: "/admin/payment",
-    pro: true,
   },
   {
     label: "dashboard:nav.events",
     icon: [SendLoggingFilled, SendLogging],
     path: "/admin/event",
-    pro: true,
   },
   {
     label: "dashboard:nav.abuseReport",
     icon: [Warning, WarningOutlined],
     path: "/admin/abuse",
-    pro: true,
   },
   {
     label: "dashboard:nav.oauthClients",
@@ -253,7 +274,6 @@ export const AdminPageNavigation = memo(() => {
 });
 
 const PageNavigation = () => {
-  const shopNavEnabled = useAppSelector((state) => state.siteConfig.basic.config.shop_nav_enabled);
   const appPromotionEnabled = useAppSelector((state) => state.siteConfig.basic.config.app_promotion);
   const user = SessionManager.currentLoginOrNull();
   const isAdmin = useMemo(() => {

@@ -60,7 +60,7 @@ const ImportWopiDialog = ({ open, onClose, onImported }: ImportWopiDialogProps) 
             <Trans
               ns="dashboard"
               i18nKey="settings.wopiDes"
-              components={[<Code />, <Link href="https://docs.cloudreve.org/usage/wopi" target="_blank" />]}
+              components={[<Code />, <Link href="https://github.com/Mxucc/StorFlow" target="_blank" />]}
             />
           </NoMarginHelperText>
         </SettingForm>

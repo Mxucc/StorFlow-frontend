@@ -1,24 +1,41 @@
-import { Box, ButtonBase, darken, lighten, styled } from "@mui/material";
+import { Box, ButtonBase, styled } from "@mui/material";
 import * as React from "react";
 import { NoWrapTypography } from "../../Common/StyledComponents.tsx";
 
+/**
+ * 侧边栏导航项：胶囊形，选中时用品牌色高亮并在左侧留一条竖向强调条。
+ *
+ * 颜色全部取自 theme.palette，因此同一组件在深色侧边栏（嵌套深色主题）和
+ * 管理端主题预览（浅色）里都成立。
+ */
 const StyledButtonBase = styled(ButtonBase)<{
   active?: boolean;
 }>(({ theme, active }) => ({
-  borderRadius: "90px",
+  position: "relative",
+  borderRadius: 12,
   display: "flex",
-  justifyContent: "left",
-  alignItems: "initial",
+  justifyContent: "flex-start",
+  alignItems: "center",
   width: "100%",
-  backgroundColor: active
-    ? `${
-        theme.palette.mode == "light"
-          ? lighten(theme.palette.primary.main, 0.7)
-          : darken(theme.palette.primary.main, 0.7)
-      }!important`
-    : "initial",
-  transition:
-    "background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,border 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms",
+  color: active ? theme.palette.primary.main : theme.palette.text.secondary,
+  backgroundColor: active ? theme.palette.action.selected : "transparent",
+  transition: "background-color 160ms ease, color 160ms ease, box-shadow 160ms ease",
+  "&:hover": {
+    backgroundColor: active ? theme.palette.action.selected : theme.palette.action.hover,
+    color: active ? theme.palette.primary.main : theme.palette.text.primary,
+  },
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    left: 0,
+    top: "50%",
+    width: 3,
+    height: active ? 18 : 0,
+    borderRadius: 3,
+    transform: "translateY(-50%)",
+    backgroundColor: theme.palette.primary.main,
+    transition: "height 180ms ease",
+  },
 }));
 
 export interface SideNavItemBaseProps {
@@ -26,20 +43,20 @@ export interface SideNavItemBaseProps {
   [key: string]: any;
 }
 export const SideNavItemBase = React.forwardRef(
-  ({ active, ...rest }: SideNavItemBaseProps, ref: React.Ref<HTMLElement>) => {
+  ({ active, ...rest }: SideNavItemBaseProps, ref: React.Ref<HTMLButtonElement>) => {
     return <StyledButtonBase active={active} {...rest} ref={ref} />;
   },
 );
 
 const StyledSideNavItem = styled(SideNavItemBase)<{ level?: number }>(({ theme, level }) => ({
+  padding: "6px 10px",
+  paddingLeft: `${14 + (level ?? 0) * 14}px`,
+  minHeight: "34px",
+  display: "flex",
+  alignItems: "center",
   "&:hover": {
     backgroundColor: theme.palette.action.hover,
   },
-  padding: "4px",
-  paddingLeft: `${28 + (level ?? 0) * 16}px`,
-  height: "32px",
-  display: "flex",
-  alignItems: "center",
 }));
 
 export interface SideNavItemProps extends SideNavItemBaseProps {
@@ -50,7 +67,7 @@ export interface SideNavItemProps extends SideNavItemBaseProps {
 }
 
 const SideNavItem = React.forwardRef(
-  ({ icon, label, level, sx, ...rest }: SideNavItemProps, ref: React.Ref<HTMLElement>) => {
+  ({ icon, label, level, sx, ...rest }: SideNavItemProps, ref: React.Ref<HTMLButtonElement>) => {
     return (
       <StyledSideNavItem
         level={level}
@@ -63,12 +80,18 @@ const SideNavItem = React.forwardRef(
         <Box
           sx={{
             width: 20,
-            mr: "14px",
+            mr: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: 0.95,
           }}
         >
           {icon}
         </Box>
-        <NoWrapTypography variant={"body2"}>{label}</NoWrapTypography>
+        <NoWrapTypography variant={"body2"} fontWeight={500}>
+          {label}
+        </NoWrapTypography>
       </StyledSideNavItem>
     );
   },

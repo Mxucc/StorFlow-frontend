@@ -63,7 +63,7 @@
     "appRequestsAccess": "{{appName}} sta richiedendo l'accesso al tuo account",
     "consentDescription": "Stai autorizzando <0>{{appName}}</0> ad accedere alle informazioni dell'account <1>{{userEmail}}</1>:",
     "deny": "Annulla",
-    "desktop": "Client desktop Cloudreve",
+    "desktop": "Client desktop StorFlow",
     "scope": {
       "readonly": "Solo lettura",
       "readwrite": "Lettura e scrittura",

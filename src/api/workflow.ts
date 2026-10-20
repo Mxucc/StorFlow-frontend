@@ -6,6 +6,13 @@ export interface ArchiveWorkflowService {
   encoding?: string;
   password?: string;
   file_mask?: string[];
+  // 指定处理该任务的节点 ID（自动分配时为空），取自 GET /workflow/nodes
+  node_id?: string;
+}
+
+export interface AvailableNode {
+  id: string;
+  name: string;
 }
 
 export interface TaskListResponse {
@@ -101,6 +108,8 @@ export interface DownloadWorkflowService {
   src?: string[];
   src_file?: string;
   dst: string;
+  // 指定处理该任务的节点 ID（自动分配时为空），取自 GET /workflow/nodes
+  node_id?: string;
 }
 
 export interface ImportWorkflowService {

@@ -101,8 +101,10 @@ const UserAvatar = memo(
       [dispatch, setLoadedUser, onUserLoaded],
     );
 
+    // 未设置头像时后端会省略 avatar 字段，此时 /user/avatar/:id 必定返回 404；
+    // 不要再发这次请求，直接交给 Avatar 组件渲染兜底底色与首字母。
     const avatarUrl = useMemo(() => {
-      if (loadedUser) {
+      if (loadedUser && loadedUser.avatar && loadedUser.id) {
         return ApiPrefix + `/user/avatar/${loadedUser.id}${cacheKey ? `?nocache=1&key=${cacheKey ?? 0}` : ""}`;
       }
       return undefined;

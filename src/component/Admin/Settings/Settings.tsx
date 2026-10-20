@@ -174,6 +174,9 @@ const Settings = () => {
                     "privacy_policy_url",
                     "show_app_promotion",
                     "show_desktop_app_promotion",
+                    "siteAnnouncement",
+                    "app_feedback",
+                    "app_forum",
                   ]}
                 >
                   <SiteInformation />
@@ -185,12 +188,32 @@ const Settings = () => {
                     "register_enabled",
                     "email_active",
                     "default_group",
+                    "default_symbolics",
                     "authn_enabled",
                     "expose_user_email",
                     "avatar_path",
                     "avatar_size",
                     "avatar_size_l",
                     "gravatar_server",
+                    "filter_email_provider",
+                    "filter_email_provider_rule",
+                    "disable_sub_address_email",
+                    "oidc_enabled",
+                    "oidc_endpoint",
+                    "oidc_client_id",
+                    "oidc_client_secret",
+                    "oidc_scopes",
+                    "oidc_display_name",
+                    "oidc_auto_redirect",
+                    "oidc_password_login_disabled",
+                    "oidc_auto_register",
+                    "oidc_auto_link_email",
+                    "oidc_require_email_verified",
+                    "oidc_subject_claim",
+                    "oidc_email_claim",
+                    "oidc_name_claim",
+                    "qq_login",
+                    "qq_login_config",
                   ]}
                 >
                   <UserSession />
@@ -294,6 +317,8 @@ const Settings = () => {
                     "fromName",
                     "mail_activation_template",
                     "mail_reset_template",
+                    "mail_receipt_template",
+                    "mail_exceed_quota_template",
                   ]}
                 >
                   <Email />
@@ -319,7 +344,7 @@ const Settings = () => {
                 </SettingsWrapper>
               )}
               {tab === SettingsPageTab.Events && (
-                <SettingsWrapper settings={[]}>
+                <SettingsWrapper settings={["audit_event_enabled"]}>
                   <Events />
                 </SettingsWrapper>
               )}

@@ -4,10 +4,11 @@ import { Box, Button, Typography } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 import {
   getOauthAppRegistration,
+  getSSOConfig,
   send2FALogin,
   sendConsentOauthApp,
   sendLogin,
@@ -15,7 +16,7 @@ import {
   sendResetEmail,
 } from "../../../../api/api.ts";
 import { AppError, Code } from "../../../../api/request.ts";
-import { AppRegistration, GrantService, LoginResponse, PrepareLoginResponse } from "../../../../api/user.ts";
+import { AppRegistration, GrantService, LoginResponse, PrepareLoginResponse, SSOConfig } from "../../../../api/user.ts";
 import { clearOAuthApp, setOAuthApp, setOAuthAppLoading } from "../../../../redux/globalStateSlice.ts";
 import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
 import { refreshUserSession, setTargetSession } from "../../../../redux/thunks/session.ts";
@@ -73,10 +74,11 @@ export interface SignInProps {
 }
 
 const EmailLogin = ({ oauthConsent }: SignInProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const query = useQuery();
+  const [searchParams] = useSearchParams();
 
   const isOAuthFlow = !!oauthConsent;
   const requestedScopes = useMemo(
@@ -96,6 +98,11 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
   const captchaState = useRef<CaptchaParams>();
   const twoFaSession = useRef<string>("");
   const [loginOptions, setLoginOptions] = useState<PrepareLoginResponse>();
+
+  // SSO (OIDC) state
+  const [ssoConfig, setSSOConfig] = useState<SSOConfig>();
+  const ssoAutoRedirected = useRef(false);
+  const ssoMsgHandled = useRef(false);
 
   // OAuth-specific state
   const [oauthError, setOauthError] = useState<string | null>(null);
@@ -333,6 +340,94 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
     };
   }, []);
 
+  // Fetch SSO (OIDC) configuration on mount. Fail silently if the endpoint is
+  // unavailable (e.g. backend not deployed), the snackbar is bypassed in the thunk.
+  useEffect(() => {
+    dispatch(getSSOConfig())
+      .then((config) => setSSOConfig(config))
+      .catch(() => {});
+  }, [dispatch]);
+
+  // Surface the SSO error passed back by the backend (?sso_error=&sso_msg=) once.
+  useEffect(() => {
+    if (ssoMsgHandled.current) {
+      return;
+    }
+    ssoMsgHandled.current = true;
+    const errorCode = searchParams.get("sso_error");
+    const message = searchParams.get("sso_msg");
+    if (errorCode || message) {
+      enqueueSnackbar({
+        message: message ?? t("login.ssoSignInFailed"),
+        variant: "error",
+        action: DefaultCloseAction,
+      });
+    }
+  }, [searchParams, t]);
+
+  // 登录成功后的目的页：优先使用登录页的 ?redirect=，否则回首页。
+  // 注意不能用 location.pathname 本身，否则 OIDC 回调后会重新落回登录页。
+  const postLoginRedirect = useCallback(() => query.get("redirect") || "/home", [query]);
+
+  const startSSOLogin = useCallback(() => {
+    const redirect = postLoginRedirect();
+    const authorizeUrl = ssoConfig?.authorize_url || "/api/v4/session/oidc/authorize";
+    window.location.href = `${authorizeUrl}?redirect=${encodeURIComponent(redirect)}`;
+  }, [ssoConfig?.authorize_url, postLoginRedirect]);
+
+  // QQ 互联登录：与 OIDC 共用回跳契约，只有授权入口不同。
+  const qqConfig = ssoConfig?.qq;
+  const qqEnabled = !!qqConfig?.enabled;
+  const qqAutoRedirect = !!qqConfig?.auto_redirect;
+
+  const startQQLogin = useCallback(() => {
+    const redirect = postLoginRedirect();
+    const authorizeUrl = qqConfig?.authorize_url || "/api/v4/session/qq/authorize";
+    window.location.href = `${authorizeUrl}?redirect=${encodeURIComponent(redirect)}`;
+  }, [qqConfig?.authorize_url, postLoginRedirect]);
+
+  const qqDisplayName = useMemo(() => {
+    const name = qqConfig?.display_name?.trim();
+    if (!name) {
+      return t("login.qqSignIn");
+    }
+    // display_name may be an i18n key or a literal string.
+    return i18n.exists(name) ? t(name) : name;
+  }, [qqConfig?.display_name, i18n, t]);
+
+  // 已登录用户不应停留在登录页（例如 OIDC 回调后落回 /session）。
+  useEffect(() => {
+    if (!isOAuthFlow && SessionManager.currentLoginOrNull()) {
+      navigate(postLoginRedirect(), { replace: true });
+    }
+  }, [isOAuthFlow, navigate, postLoginRedirect]);
+
+  // Auto redirect exactly once when enabled. QQ shares the OIDC semantics; when
+  // both are enabled QQ wins (its config is the more specific one).
+  useEffect(() => {
+    if (ssoAutoRedirected.current) {
+      return;
+    }
+    if (qqEnabled && qqAutoRedirect) {
+      ssoAutoRedirected.current = true;
+      startQQLogin();
+      return;
+    }
+    if (ssoConfig?.enabled && ssoConfig.auto_redirect) {
+      ssoAutoRedirected.current = true;
+      startSSOLogin();
+    }
+  }, [ssoConfig, qqEnabled, qqAutoRedirect, startQQLogin, startSSOLogin]);
+
+  const ssoDisplayName = useMemo(() => {
+    const name = ssoConfig?.display_name?.trim();
+    if (!name) {
+      return t("login.ssoSignIn");
+    }
+    // display_name may be an i18n key or a literal string.
+    return i18n.exists(name) ? t(name) : name;
+  }, [ssoConfig?.display_name, i18n, t]);
+
   const handleScopeToggle = useCallback((scope: string) => {
     setSelectedScopes((prev) => (prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope]));
   }, []);
@@ -456,67 +551,79 @@ const EmailLogin = ({ oauthConsent }: SignInProps) => {
   return (
     <Box sx={{ overflow: "hidden" }}>
       <Typography variant={"h6"}>{phaseConfig.title}</Typography>
-      <Box component={"form"} sx={{ mt: 1 }} onSubmit={submit}>
-        <SwitchTransition>
-          <CSSTransition
-            addEndListener={(node, done) => node.addEventListener("transitionend", done, false)}
-            classNames="side"
-            key={phase}
-          >
-            <Box>
-              {phase === EmailLoginPhase.CollectPassword && (
-                <PhaseCollectPassword
-                  email={email}
-                  pwd={pwd}
-                  onForget={() => setPhase(EmailLoginPhase.ForgetPassword)}
-                  setPwd={setPwd}
-                  control={phaseConfig.control}
-                  loginOptions={loginOptions}
-                  captchaGen={captchaGen}
-                  setCaptchaState={(s) => (captchaState.current = s)}
-                  onOAuthPasskeyLogin={isOAuthFlow ? handleOAuthSessionSwitch : undefined}
-                />
-              )}
-              {phase === EmailLoginPhase.SignupNeeded && (
-                <PhaseSignupNeeded email={email} control={phaseConfig.control} />
-              )}
-              {phase === EmailLoginPhase.Collect2FA && (
-                <Phase2FA
-                  loading={loading}
-                  otp={otp}
-                  onOtpChange={(t: string) => setOTP(t)}
-                  control={phaseConfig.control}
-                />
-              )}
-              {phase === EmailLoginPhase.CollectEmail && (
-                <PhaseCollectEmail
-                  email={email}
-                  setEmail={setEmail}
-                  control={phaseConfig.control}
-                  onOAuthPasskeyLogin={isOAuthFlow ? handleOAuthSessionSwitch : undefined}
-                />
-              )}
-              {phase === EmailLoginPhase.Consent && app && (
-                <PhaseConsent
-                  app={app}
-                  requestedScopes={requestedScopes}
-                  selectedScopes={selectedScopes}
-                  onScopeToggle={handleScopeToggle}
-                  control={phaseConfig.control!}
-                />
-              )}
-              {phase === EmailLoginPhase.ForgetPassword && (
-                <PhaseForgetPassword
-                  email={email}
-                  captchaGen={captchaGen}
-                  setCaptchaState={(s) => (captchaState.current = s)}
-                  control={phaseConfig.control}
-                />
-              )}
-            </Box>
-          </CSSTransition>
-        </SwitchTransition>
-      </Box>
+      {ssoConfig?.enabled && (
+        <Button sx={{ mt: 2 }} fullWidth variant={"contained"} color={"primary"} onClick={startSSOLogin}>
+          {ssoDisplayName}
+        </Button>
+      )}
+      {qqEnabled && (
+        <Button sx={{ mt: 2 }} fullWidth variant={"outlined"} color={"primary"} onClick={startQQLogin}>
+          {qqDisplayName}
+        </Button>
+      )}
+      {!ssoConfig?.password_login_disabled && (
+        <Box component={"form"} sx={{ mt: 1 }} onSubmit={submit}>
+          <SwitchTransition>
+            <CSSTransition
+              addEndListener={(node, done) => node.addEventListener("transitionend", done, false)}
+              classNames="side"
+              key={phase}
+            >
+              <Box>
+                {phase === EmailLoginPhase.CollectPassword && (
+                  <PhaseCollectPassword
+                    email={email}
+                    pwd={pwd}
+                    onForget={() => setPhase(EmailLoginPhase.ForgetPassword)}
+                    setPwd={setPwd}
+                    control={phaseConfig.control}
+                    loginOptions={loginOptions}
+                    captchaGen={captchaGen}
+                    setCaptchaState={(s) => (captchaState.current = s)}
+                    onOAuthPasskeyLogin={isOAuthFlow ? handleOAuthSessionSwitch : undefined}
+                  />
+                )}
+                {phase === EmailLoginPhase.SignupNeeded && (
+                  <PhaseSignupNeeded email={email} control={phaseConfig.control} />
+                )}
+                {phase === EmailLoginPhase.Collect2FA && (
+                  <Phase2FA
+                    loading={loading}
+                    otp={otp}
+                    onOtpChange={(t: string) => setOTP(t)}
+                    control={phaseConfig.control}
+                  />
+                )}
+                {phase === EmailLoginPhase.CollectEmail && (
+                  <PhaseCollectEmail
+                    email={email}
+                    setEmail={setEmail}
+                    control={phaseConfig.control}
+                    onOAuthPasskeyLogin={isOAuthFlow ? handleOAuthSessionSwitch : undefined}
+                  />
+                )}
+                {phase === EmailLoginPhase.Consent && app && (
+                  <PhaseConsent
+                    app={app}
+                    requestedScopes={requestedScopes}
+                    selectedScopes={selectedScopes}
+                    onScopeToggle={handleScopeToggle}
+                    control={phaseConfig.control!}
+                  />
+                )}
+                {phase === EmailLoginPhase.ForgetPassword && (
+                  <PhaseForgetPassword
+                    email={email}
+                    captchaGen={captchaGen}
+                    setCaptchaState={(s) => (captchaState.current = s)}
+                    control={phaseConfig.control}
+                  />
+                )}
+              </Box>
+            </CSSTransition>
+          </SwitchTransition>
+        </Box>
+      )}
     </Box>
   );
 };

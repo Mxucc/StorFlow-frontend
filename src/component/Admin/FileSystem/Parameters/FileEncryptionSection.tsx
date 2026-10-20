@@ -61,12 +61,7 @@ const FileEncryptionSection = () => {
               <Trans
                 i18nKey="settings.masterEncryptionKeyVaultDes"
                 ns="dashboard"
-                components={[
-                  <Link
-                    href="https://docs.cloudreve.org/usage/file-encryption#rotate-master-encryption-key"
-                    target="_blank"
-                  />,
-                ]}
+                components={[<Link href="https://github.com/Mxucc/StorFlow" target="_blank" />]}
               />
             </NoMarginHelperText>
           </FormControl>

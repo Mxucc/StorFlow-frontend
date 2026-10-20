@@ -30,7 +30,7 @@ import SubtitleStyleDialog from "./SubtitleStyleDialog.tsx";
 
 const Player = lazy(() => import("./Artplayer.tsx"));
 
-export const CrMaskedPrefix = "https://cloudreve_masked/";
+export const CrMaskedPrefix = "https://storflow_masked/";
 
 export interface SubtitleStyle {
   fontSize?: number;
@@ -326,7 +326,7 @@ const VideoViewer = () => {
       if (!viewerState?.file) {
         return url;
       }
-      // remove cloudreve_masked prefix of url
+      // remove storflow_masked prefix of url
       if (!url.startsWith(CrMaskedPrefix)) {
         return url;
       }

@@ -35,7 +35,6 @@ const TopAppBar = () => {
   const musicPlayer = useAppSelector((state) => state.globalState.musicPlayer);
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
 
-  const appBarBg = theme.palette.mode === "light" ? theme.palette.grey[100] : theme.palette.grey[900];
   const isLogin = !!SessionManager.currentLoginOrNull();
 
   const onMobileMenuClicked = (e: React.MouseEvent<HTMLElement>) => {
@@ -57,8 +56,6 @@ const TopAppBar = () => {
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.leavingScreen,
         }),
-        backgroundColor: appBarBg,
-        color: theme.palette.getContrastText(appBarBg),
         ...(open &&
           !isMobile && {
             width: `calc(100% - ${drawerWidth}px)`,

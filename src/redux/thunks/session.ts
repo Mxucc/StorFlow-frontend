@@ -96,7 +96,7 @@ export function openDesktopCallback(code: string, state: string, displayName?: s
     }
 
     const search = new URLSearchParams(params);
-    window.location.href = `cloudreve://mount?${search.toString()}`;
+    window.location.href = `storflow://mount?${search.toString()}`;
     dispatch(closeDesktopMountSetupDialog());
     enqueueSnackbar({
       message: i18next.t("fileManager.continueInDesktop"),

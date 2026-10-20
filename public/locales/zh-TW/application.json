@@ -1,4 +1,6 @@
 {
+  "announcement": "站點公告",
+  "announcementAcknowledge": "我知道了",
   "login": {
     "lastStep": "最後一步",
     "siginToYourAccount": "登入你的賬號",
@@ -20,6 +22,9 @@
     "captcha": "驗證碼",
     "captchaError": "驗證碼載入失敗：",
     "signIn": "登入",
+    "ssoSignIn": "使用 SSO 登入",
+    "ssoSignInFailed": "SSO 登入失敗，請重試。",
+    "qqSignIn": "使用 QQ 登入",
     "signUp": "注冊",
     "signUpAccount": "注冊賬號",
     "useFIDO2": "使用通行金鑰器登入",
@@ -63,7 +68,7 @@
     "appRequestsAccess": "{{appName}} 正在請求存取你的帳號",
     "consentDescription": "你正在授權 <0>{{appName}}</0> 存取帳號 <1>{{userEmail}}</1> 下的資訊：",
     "deny": "取消",
-    "desktop": "Cloudreve 桌面客戶端",
+    "desktop": "StorFlow 桌面客戶端",
     "scope": {
       "readonly": "唯讀",
       "readwrite": "讀寫",
@@ -143,11 +148,13 @@
     "objectsSelected": "{{num}} 個物件",
     "searchPlaceholder": "按下 <0>/</0> 開始搜尋",
     "backToHomepage": "返回主頁",
+    "siteHome": "官網首頁",
     "darkModeSwitch": "設定黑暗模式",
     "toDarkMode": "黑暗",
     "toLightMode": "淺色",
     "myProfile": "個人主頁",
-    "dashboard": "管理面板"
+    "dashboard": "管理面板",
+    "store": "商店"
   },
   "fileManager": {
     "continueInDesktop": "授權成功，請在桌面客戶端中繼續操作。",
@@ -545,6 +552,8 @@
     "downloadToDst": "下載至 <0>{{name}}</0>",
     "downloadTo": "下載至",
     "decompressTo": "解壓縮至",
+    "pickFile": "選擇檔案",
+    "pickFileIndicator": "已選擇 <0></0>",
     "decompressToDst": "解壓縮至 <0>{{name}}</0>",
     "defaultEncoding": "預設",
     "chineseMajorEncoding": "簡體中文常見編碼",
@@ -784,6 +793,8 @@
   },
   "setting": {
     "treeView": "樹視圖",
+    "appFeedback": "回報問題",
+    "appForum": "使用者論壇",
     "autoExpandTreeView": "自動展開樹視圖",
     "autoExpandTreeViewDes": "開啟後，側邊欄的文件樹會隨當前目錄自動展開。",
     "syncView": "視圖設置",
@@ -994,5 +1005,126 @@
     "reportReasonOptions": ["侵權", "有害內容", "垃圾訊息", "其他"],
     "reportDescription": "補充說明",
     "reportAbuseSuccess": "舉報已提交"
+  },
+  "store": {
+    "title": "加值服務",
+    "retry": "重試",
+    "refresh": "重新整理",
+    "loadFailed": "商店載入失敗。",
+    "empty": "商店暫無商品",
+    "emptyHint": "管理員上架容量包、會員或積分包後會顯示在這裡。",
+    "buy": "購買",
+    "close": "關閉",
+    "pointsBalance": "我的積分",
+    "pointsEmpty": "暫無積分記錄",
+    "pricePointsOnly": "僅支援積分購買",
+    "pricePoints": "或 {{points}} 積分",
+    "tabs": {
+      "products": "商品",
+      "points": "我的積分",
+      "giftcode": "兌換碼",
+      "orders": "我的訂單"
+    },
+    "type": {
+      "storage": "容量包",
+      "group": "會員",
+      "points": "積分包"
+    },
+    "detail": {
+      "storage": "獲得容量 {{size}}",
+      "groupDays": "有效期 {{days}} 天",
+      "groupForever": "永久有效",
+      "points": "獲得 {{num}} 積分"
+    },
+    "pay": {
+      "online": "線上付款 · {{name}}",
+      "points": "使用積分付款（{{points}} 積分）",
+      "pointsBalance": "目前積分 {{balance}}",
+      "noChannel": "暫無可用的付款管道，請聯絡管理員。",
+      "confirm": "確認付款",
+      "success": "購買成功，權益已到帳。",
+      "paidPending": "付款成功，權益發放中。",
+      "pending": "請在開啟的收銀台完成付款，本頁會自動重新整理訂單狀態。",
+      "orderNo": "訂單號：{{order}}",
+      "amount": "應付金額：{{amount}}",
+      "checkStatus": "我已付款，重新整理狀態",
+      "failed": "下單失敗，請稍後重試。"
+    },
+    "points": {
+      "fields": {
+        "time": "時間",
+        "change": "變動",
+        "balance": "變動後餘額",
+        "note": "說明"
+      }
+    },
+    "reason": {
+      "recharge": "積分儲值",
+      "purchase": "購買商品",
+      "redeem": "兌換碼",
+      "admin": "管理員調整"
+    },
+    "giftcode": {
+      "title": "兌換碼",
+      "hint": "輸入兌換碼即可兌換積分、容量或會員。",
+      "code": "兌換碼",
+      "redeem": "兌換",
+      "success": "兌換成功",
+      "failed": "兌換失敗",
+      "reward": "已到帳：{{type}} {{num}}"
+    },
+    "order": {
+      "fields": {
+        "orderNo": "訂單號",
+        "product": "商品",
+        "amount": "金額",
+        "status": "狀態",
+        "time": "下單時間"
+      },
+      "status": {
+        "unpaid": "待付款",
+        "paid": "已付款",
+        "fulfilled": "已到帳",
+        "fail": "發放失敗"
+      },
+      "empty": "暫無訂單",
+      "loadFailed": "訂單載入失敗。",
+      "pointsUsed": "{{points}} 積分",
+      "prev": "上一頁",
+      "next": "下一頁"
+    },
+    "payment": {
+      "title": "付款結果",
+      "pending": "訂單尚未付款，完成付款後本頁會自動重新整理。",
+      "success": "付款成功，權益已到帳。",
+      "paidPending": "付款成功，權益發放中。",
+      "failed": "權益發放失敗，請聯絡管理員處理。",
+      "backToStore": "返回商店",
+      "myOrders": "我的訂單",
+      "loadFailed": "訂單狀態載入失敗。"
+    },
+    "hero": {
+      "title": "讓網盤更好用",
+      "description": "購買容量包、會員或積分包，付款成功後立即生效；也可以使用兌換碼直接兌換。"
+    },
+    "benefit": {
+      "title": "會員權益",
+      "capacity": "儲存容量 {{size}}",
+      "speed": "下載速度 {{speed}}",
+      "unlimited": "不限",
+      "trash": "回收站保留 {{days}} 天",
+      "share": "建立分享連結",
+      "shareDownload": "存取分享連結",
+      "shareFree": "免購買付費分享",
+      "webdav": "WebDAV 存取",
+      "archive": "線上壓縮 / 解壓縮",
+      "remoteDownload": "離線下載",
+      "migratePolicy": "儲存策略轉移",
+      "advanceDelete": "進階檔案刪除",
+      "uniqueDirectLink": "獨立直鏈",
+      "upgradeTo": "升級為 {{group}}",
+      "duration": "有效期 {{days}} 天",
+      "forever": "永久有效"
+    }
   }
 }

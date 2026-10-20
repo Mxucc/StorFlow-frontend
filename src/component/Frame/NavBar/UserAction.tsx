@@ -28,6 +28,7 @@ import HomeOutlined from "../../Icons/HomeOutlined.tsx";
 import Person from "../../Icons/Person.tsx";
 import SettingsOutlined from "../../Icons/SettingsOutlined.tsx";
 import SignOut from "../../Icons/SignOut.tsx";
+import Globe from "../../Icons/Globe.tsx";
 import WrenchSettings from "../../Icons/WrenchSettings.tsx";
 
 const StyledTypography = styled(Typography)(() => ({
@@ -73,6 +74,13 @@ const UserPopover = ({ open, onClose, ...rest }: PopoverProps) => {
     navigate(`/admin/home`);
     onClose && onClose({}, "backdropClick");
   }, [user?.id]);
+
+  // 官网首页是 Astro 服务端渲染的页面，必须整页跳转：SPA 内的 `/` 路由会被
+  // HomeRedirect 接管，软导航过去只会回到控制台或登录页。
+  const openSiteHome = useCallback(() => {
+    onClose && onClose({}, "backdropClick");
+    window.location.assign("/");
+  }, []);
 
   return (
     <Popover
@@ -135,6 +143,12 @@ const UserPopover = ({ open, onClose, ...rest }: PopoverProps) => {
             <HomeOutlined fontSize={"small"} />
           </ListItemIcon>
           <ListItemText>{t("navbar.myProfile")}</ListItemText>
+        </SquareMenuItem>
+        <SquareMenuItem onClick={openSiteHome}>
+          <ListItemIcon>
+            <Globe fontSize={"small"} />
+          </ListItemIcon>
+          <ListItemText>{t("navbar.siteHome")}</ListItemText>
         </SquareMenuItem>
         <SquareMenuItem onClick={signOut}>
           <ListItemIcon>

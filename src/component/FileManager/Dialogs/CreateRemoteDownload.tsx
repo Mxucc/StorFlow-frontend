@@ -15,6 +15,7 @@ import { ViewTaskAction } from "../../Common/Snackbar/snackbar.tsx";
 import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
 import Link from "../../Icons/Link.tsx";
 import { FileManagerIndex } from "../FileManager.tsx";
+import TaskNodeSelector from "./TaskNodeSelector.tsx";
 
 const CreateRemoteDownload = () => {
   const { t } = useTranslation();
@@ -26,6 +27,7 @@ const CreateRemoteDownload = () => {
   const [loading, setLoading] = useState(false);
   const [path, setPath] = useState("");
   const [url, setUrl] = useState("");
+  const [nodeID, setNodeID] = useState<string | undefined>(undefined);
 
   const open = useAppSelector((state) => state.globalState.remoteDownloadDialogOpen);
   const target = useAppSelector((state) => state.globalState.remoteDownloadDialogFile);
@@ -55,6 +57,7 @@ const CreateRemoteDownload = () => {
         src_file: target ? getFileLinkedUri(target) : undefined,
         dst: path,
         src: url ? url.split("\n") : undefined,
+        node_id: nodeID,
       }),
     )
       .then(() => {
@@ -68,7 +71,7 @@ const CreateRemoteDownload = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [target, url, path]);
+  }, [target, url, path, nodeID]);
 
   return (
     <DraggableDialog
@@ -111,6 +114,7 @@ const CreateRemoteDownload = () => {
               label={t("modals.remoteDownloadDst")}
             />
           </Stack>
+          <TaskNodeSelector value={nodeID} onChange={setNodeID} />
         </Stack>
       </DialogContent>
     </DraggableDialog>

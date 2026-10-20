@@ -5,7 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { AppError, Code, Response } from "../../../api/request.ts";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { navigateToPath, retrySharePassword } from "../../../redux/thunks/filemanager.ts";
+import { PaidShareGate } from "../../Common/Shop/PaidShareDialog.tsx";
 import { Filesystem } from "../../../util/uri.ts";
+import CrUri from "../../../util/uri.ts";
 import { FilledTextField, SecondaryButton } from "../../Common/StyledComponents.tsx";
 import ArrowLeft from "../../Icons/ArrowLeft.tsx";
 import LinkDismiss from "../../Icons/LinkDismiss.tsx";
@@ -56,6 +58,7 @@ const ExplorerError = memo(
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const fmIndex = useContext(FmIndexContext);
+    const purePath = useAppSelector((state) => state.fileManager[fmIndex].pure_path);
     const fs = useAppSelector((state) => state.fileManager[fmIndex].current_fs);
     const previousPath = useAppSelector((state) => state.fileManager[fmIndex].previous_path);
     const { t } = useTranslation("application");
@@ -88,6 +91,36 @@ const ExplorerError = memo(
           );
         case Code.IncorrectPassword:
           return <RetryPassword />;
+        // 付费分享（网盘小店）：后端要求先购买，这里给出购买入口，购买成功后刷新当前页面
+        case Code.PurchaseRequired: {
+          const sharePath = purePath ?? previousPath ?? "";
+          let shareId = "";
+          let sharePassword = "";
+          try {
+            const uri = new CrUri(sharePath);
+            if (uri.fs() === Filesystem.share) {
+              shareId = uri.id();
+              sharePassword = uri.password();
+            }
+          } catch {
+            shareId = "";
+          }
+          if (!shareId) {
+            return (
+              <Alert severity={"warning"}>
+                <AlertTitle>{t("application:shop.share.gateTitle")}</AlertTitle>
+                {appErr && appErr.message}
+              </Alert>
+            );
+          }
+          return (
+            <PaidShareGate
+              shareId={shareId}
+              password={sharePassword || undefined}
+              onPurchased={() => window.location.reload()}
+            />
+          );
+        }
         // @ts-ignore
         case Code.NodeFound:
           if (fs == Filesystem.share) {

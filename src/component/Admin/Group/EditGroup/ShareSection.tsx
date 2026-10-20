@@ -1,11 +1,10 @@
-import { Box, FormControl, FormControlLabel, Switch, Typography } from "@mui/material";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { FormControl, FormControlLabel, Switch, Typography } from "@mui/material";
+import { useCallback, useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { GroupEnt } from "../../../../api/dashboard";
 import { GroupPermission } from "../../../../api/user";
 import Boolset from "../../../../util/boolset";
-import SettingForm, { ProChip } from "../../../Pages/Setting/SettingForm";
-import ProDialog from "../../Common/ProDialog";
+import SettingForm from "../../../Pages/Setting/SettingForm";
 import { NoMarginHelperText, SettingSection, SettingSectionContent } from "../../Settings/Settings";
 import { AnonymousGroupID } from "../GroupRow";
 import { GroupSettingContext } from "./GroupSettingWrapper";
@@ -13,40 +12,21 @@ import { GroupSettingContext } from "./GroupSettingWrapper";
 const ShareSection = () => {
   const { t } = useTranslation("dashboard");
   const { values, setGroup } = useContext(GroupSettingContext);
-  const [proOpen, setProOpen] = useState(false);
 
-  const permission = useMemo(() => {
-    return new Boolset(values.permissions ?? "");
-  }, [values.permissions]);
+  const permission = useMemo(() => new Boolset(values.permissions ?? ""), [values.permissions]);
 
-  const onAllowCreateShareLinkChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+  const toggle = useCallback(
+    (bit: number, enabled: boolean) => {
       setGroup((p: GroupEnt) => ({
         ...p,
-        permissions: new Boolset(p.permissions).set(GroupPermission.share, e.target.checked).toString(),
+        permissions: new Boolset(p.permissions).set(bit, enabled).toString(),
       }));
     },
     [setGroup],
   );
-
-  const onShareDownloadChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setGroup((p: GroupEnt) => ({
-        ...p,
-        permissions: new Boolset(p.permissions).set(GroupPermission.share_download, e.target.checked).toString(),
-      }));
-    },
-    [setGroup],
-  );
-
-  const onProClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    setProOpen(true);
-  };
 
   return (
     <SettingSection>
-      <ProDialog open={proOpen} onClose={() => setProOpen(false)} />
       <Typography variant="h6" gutterBottom>
         {t("group.share")}
       </Typography>
@@ -56,7 +36,10 @@ const ShareSection = () => {
             <FormControl fullWidth>
               <FormControlLabel
                 control={
-                  <Switch checked={permission.enabled(GroupPermission.share)} onChange={onAllowCreateShareLinkChange} />
+                  <Switch
+                    checked={permission.enabled(GroupPermission.share)}
+                    onChange={(e) => toggle(GroupPermission.share, e.target.checked)}
+                  />
                 }
                 label={t("group.allowCreateShareLink")}
               />
@@ -65,15 +48,15 @@ const ShareSection = () => {
           </SettingForm>
         )}
         <SettingForm lgWidth={5}>
-          <FormControl fullWidth onClick={onProClick}>
+          <FormControl fullWidth>
             <FormControlLabel
-              control={<Switch checked={false} />}
-              label={
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  {t("group.shareFree")}
-                  <ProChip size="small" label="Pro" />
-                </Box>
+              control={
+                <Switch
+                  checked={permission.enabled(GroupPermission.share_free)}
+                  onChange={(e) => toggle(GroupPermission.share_free, e.target.checked)}
+                />
               }
+              label={t("group.shareFree")}
             />
             <NoMarginHelperText>{t("group.shareFreeDes")}</NoMarginHelperText>
           </FormControl>
@@ -82,7 +65,10 @@ const ShareSection = () => {
           <FormControl fullWidth>
             <FormControlLabel
               control={
-                <Switch checked={permission.enabled(GroupPermission.share_download)} onChange={onShareDownloadChange} />
+                <Switch
+                  checked={permission.enabled(GroupPermission.share_download)}
+                  onChange={(e) => toggle(GroupPermission.share_download, e.target.checked)}
+                />
               }
               label={t("group.allowDownloadShare")}
             />
@@ -91,15 +77,15 @@ const ShareSection = () => {
         </SettingForm>
         {values?.id != AnonymousGroupID && (
           <SettingForm lgWidth={5}>
-            <FormControl fullWidth onClick={onProClick}>
+            <FormControl fullWidth>
               <FormControlLabel
-                control={<Switch checked={false} />}
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    {t("group.esclateAnonymity")}
-                    <ProChip size="small" label="Pro" />
-                  </Box>
+                control={
+                  <Switch
+                    checked={permission.enabled(GroupPermission.escalate_anonymity)}
+                    onChange={(e) => toggle(GroupPermission.escalate_anonymity, e.target.checked)}
+                  />
                 }
+                label={t("group.esclateAnonymity")}
               />
               <NoMarginHelperText>{t("group.esclateAnonymityDes")}</NoMarginHelperText>
             </FormControl>

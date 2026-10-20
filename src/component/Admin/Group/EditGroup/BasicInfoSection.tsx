@@ -7,7 +7,7 @@ import Boolset from "../../../../util/boolset";
 import SizeInput from "../../../Common/SizeInput";
 import { DenseFilledTextField } from "../../../Common/StyledComponents";
 import InPrivate from "../../../Icons/InPrivate";
-import SettingForm, { ProChip } from "../../../Pages/Setting/SettingForm";
+import SettingForm from "../../../Pages/Setting/SettingForm";
 import { NoMarginHelperText, SettingSection, SettingSectionContent } from "../../Settings/Settings";
 import { AnonymousGroupID } from "../GroupRow";
 import { GroupSettingContext } from "./GroupSettingWrapper";
@@ -27,11 +27,24 @@ const BasicInfoSection = () => {
     [setGroup],
   );
 
+  // 可用存储策略：优先使用用户组配置的多选白名单，未配置时退回为绑定的单一策略。
+  const availablePolicies = useMemo(() => {
+    const configured = values.settings?.available_policies;
+    if (configured && configured.length > 0) {
+      return configured;
+    }
+    return values.edges.storage_policies?.id ? [values.edges.storage_policies.id] : [];
+  }, [values.settings?.available_policies, values.edges.storage_policies?.id]);
+
   const onPolicyChange = useCallback(
-    (value: number) => {
+    (value: number[]) => {
       setGroup((p: GroupEnt) => ({
         ...p,
-        edges: { ...p.edges, storage_policies: { id: value } as StoragePolicy },
+        // 第一个策略作为用户组的默认策略，整份列表写入可用策略白名单。
+        edges: value.length
+          ? { ...p.edges, storage_policies: { id: value[0] } as StoragePolicy }
+          : { ...p.edges, storage_policies: undefined },
+        settings: { ...p.settings, available_policies: value.length ? value : undefined },
       }));
     },
     [setGroup],
@@ -79,11 +92,9 @@ const BasicInfoSection = () => {
         {values?.id != AnonymousGroupID && (
           <>
             <SettingForm title={t("group.availablePolicies")} lgWidth={5}>
-              <PolicySelectionInput value={values.edges.storage_policies?.id ?? 0} onChange={onPolicyChange} />
+              <PolicySelectionInput value={availablePolicies} onChange={onPolicyChange} />
               <NoMarginHelperText>{t("group.availablePoliciesDes")}</NoMarginHelperText>
-              <NoMarginHelperText>
-                <ProChip size="small" label="Pro" sx={{ ml: 0 }} /> {t("group.availablePolicyDesPro")}
-              </NoMarginHelperText>
+              <NoMarginHelperText>{t("group.availablePolicyDesPro")}</NoMarginHelperText>
             </SettingForm>
             <SettingForm title={t("group.initialStorageQuota")} lgWidth={5}>
               <FormControl fullWidth>

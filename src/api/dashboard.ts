@@ -61,6 +61,16 @@ export interface GroupSetting {
   max_walked_files?: number;
   trash_retention?: number;
   redirected_source?: boolean;
+  // available_policies 用户组可用的存储策略 ID 列表（Pro: 可用存储策略多选）。
+  available_policies?: number[];
+  // default_pinned_shares 用户组默认置顶的分享数字 ID 列表（Pro: 默认固定分享）。
+  default_pinned_shares?: number[];
+  // folder_direct_link 允许组内用户为目录生成直链（Pro: 目录直链）。
+  folder_direct_link?: boolean;
+  /** 用户组可用的任务处理节点 ID 列表（Pro: 可用节点） */
+  allowed_nodes?: number[];
+  /** 允许组内用户创建任务前自行选择节点（Pro: 允许选择节点） */
+  allow_select_node?: boolean;
 }
 
 export interface AdminListGroupResponse {
@@ -211,6 +221,12 @@ export enum NodeStatus {
   suspended = "suspended",
 }
 
+/** 负载均衡策略的子策略条目：文件会落在 policy_id 上，weight 为相对权重。 */
+export interface LoadBalanceSubPolicy {
+  policy_id: number;
+  weight: number;
+}
+
 export interface PolicySetting {
   token?: string;
   file_type?: string[];
@@ -244,6 +260,14 @@ export interface PolicySetting {
   qiniu_upload_cdn?: boolean;
   chunk_concurrency?: number;
   encryption?: boolean;
+  // 移动云盘（yun139）
+  yun139_token?: string;
+  yun139_username?: string;
+  yun139_password?: string;
+  yun139_mail_cookies?: string;
+  yun139_root_folder_id?: string;
+  /** 负载均衡策略的子策略与权重（Pro: 负载均衡存储策略） */
+  load_balance_sub_policies?: LoadBalanceSubPolicy[];
 }
 
 export interface User extends CommonMixin {
@@ -255,6 +279,8 @@ export interface User extends CommonMixin {
   storage?: number;
   avatar?: string;
   credit?: number;
+  // points 为积分余额（服务端由积分账本实时计算）。
+  points?: number;
   group_expires?: string;
   notify_date?: string;
   group_users?: number;
@@ -301,6 +327,8 @@ export interface UserSetting {
 export interface PinedFile {
   uri: string;
   name?: string;
+  // locked 为 true 表示该置顶项来自用户组默认置顶（Pro: 默认固定分享），用户无法取消。
+  locked?: boolean;
 }
 
 export interface ListStoragePolicyResponse {
@@ -486,26 +514,6 @@ export interface LogEntry {
   exts?: Record<string, string>;
 }
 
-export interface AuditLog extends CommonMixin {
-  type?: number;
-  correlation_id?: string;
-  ip?: string;
-  content?: LogEntry;
-  edges: {
-    user?: User;
-    file?: File;
-    entity?: Entity;
-    share?: Share;
-  };
-
-  user_hash_id?: string;
-}
-
-export interface ListAuditLogResponse {
-  logs: AuditLog[];
-  pagination: PaginationResults;
-}
-
 export interface TaskPublicState {
   error?: string;
   error_history?: string[];
@@ -598,4 +606,158 @@ export interface ListOAuthClientResponse {
 
 export interface UpsertOAuthClientService {
   client: OAuthClient;
+}
+
+// ─── Pro 能力：事件（审计日志） / 滥用举报 / 增值服务订单 ──────────────────────
+
+/**
+ * 事件（审计日志）。
+ *
+ * 与 Pro 的记录结构保持一致：`type` 是数字事件类型（见 `AuditLogType`），
+ * `action` 是同一事件的可读名称，`content` 是事件载荷，`edges.user` 是触发者。
+ * 详情弹窗直接使用行内数据，不需要额外请求。
+ */
+export interface AuditLogItem extends CommonMixin {
+  type: number;
+  action?: string;
+  correlation_id?: string;
+  ip?: string;
+  content?: LogEntry;
+  edges?: {
+    user?: User;
+  };
+  user_hash_id?: string;
+  user_id?: number;
+  user_email?: string;
+  object_type?: string;
+  object_name?: string;
+  detail?: string;
+}
+
+export interface ListAuditLogResponse {
+  logs: AuditLogItem[];
+  pagination: PaginationResults;
+}
+
+/** 清理事件：删除 `before_days` 天前、且属于给定类型的事件。 */
+export interface AuditCleanupService {
+  types?: string[];
+  before_days: number;
+}
+
+/** 滥用举报。`status`：pending / resolved / dismissed。 */
+export interface AbuseReport {
+  id: number;
+  share_id: number;
+  share_hash: string;
+  share_url: string;
+  /** 被举报分享对应的文件名；分享已被删除时为空。 */
+  file_name?: string;
+  reporter_email: string;
+  ip: string;
+  reason: string;
+  status: string;
+  note: string;
+  created_at: string;
+}
+
+export interface ListAbuseReportResponse {
+  reports: AbuseReport[];
+  pagination: PaginationResults;
+}
+
+export interface AbuseHandleService {
+  status?: "pending" | "resolved" | "dismissed";
+  note?: string;
+}
+
+/** 增值服务订单（Pro 的「订单」页）。金额单位为「分」。 */
+export interface Payment {
+  id: number;
+  order_no: string;
+  product_type: string;
+  sku_name: string;
+  num: number;
+  quantity: number;
+  amount: number;
+  currency: string;
+  points_used: number;
+  channel: string;
+  status: string;
+  email: string;
+  created_at: string;
+  user?: User;
+}
+
+export interface ListPaymentResponse {
+  payments: Payment[];
+  pagination: PaginationResults;
+}
+
+/** 增值服务商品类型：积分包 / 容量包 / 会员（用户组）。 */
+export type VASProductType = "points" | "storage" | "group";
+
+/** 支付渠道类型。 */
+export type VASProviderType = "epay" | "custom" | "stripe";
+
+/** 增值服务商品（SKU）。`price` 单位为「分」，0 表示仅支持积分购买。 */
+export interface VASSKU {
+  id: string;
+  type: VASProductType;
+  name: string;
+  price: number;
+  currency?: string;
+  points_price?: number;
+  num: number;
+  duration_days?: number;
+  /** 卖家填写的卖点介绍，展示在商店商品卡片上。 */
+  description?: string;
+  on_sale: boolean;
+}
+
+export interface SaveVASSKUsService {
+  skus: VASSKU[];
+}
+
+/** 支付渠道配置。`config` 为渠道网关所需的键值对。 */
+export interface VASProvider {
+  id: string;
+  type: VASProviderType;
+  name: string;
+  on_sale: boolean;
+  config: Record<string, string>;
+}
+
+export interface SaveVASProvidersService {
+  providers: VASProvider[];
+}
+
+/** 兑换码。 */
+export interface GiftCode extends CommonMixin {
+  code: string;
+  product_type: VASProductType;
+  num: number;
+  name?: string;
+  used: boolean;
+  used_by?: number;
+  used_by_email?: string;
+  created_by_email?: string;
+}
+
+export interface ListGiftCodeResponse {
+  gift_codes: GiftCode[];
+  pagination: PaginationResults;
+}
+
+export interface CreateGiftCodeService {
+  count: number;
+  product_type: VASProductType;
+  num: number;
+  name: string;
+  prefix: string;
+}
+
+export interface CreateGiftCodeResponse {
+  codes: string[];
+  count: number;
 }

@@ -56,12 +56,12 @@ const magicVars: MagicVar[] = [
   {
     name: "{$src}",
     value: "settings.srcEncodedVar",
-    example: "https%3A%2F%2Fcloudreve.org%2Fapi%2Fv4%2Ffile%2Fcontent%2FzOie%2F0%2Ftext.txt%3Fsign%3Dxxx",
+    example: "https%3A%2F%2Fexample.com%2Fapi%2Fv4%2Ffile%2Fcontent%2FzOie%2F0%2Ftext.txt%3Fsign%3Dxxx",
   },
   {
     name: "{$src_raw}",
     value: "settings.srcVar",
-    example: "https://cloudreve.org/api/v4/file/content/zOie/0/text.txt?sign=xxx",
+    example: "https://example.com/api/v4/file/content/zOie/0/text.txt?sign=xxx",
   },
   {
     name: "{$src_raw_base64}",

@@ -30,6 +30,7 @@ import {
   ListsToggle,
   markdownShortcutPlugin,
   MDXEditor,
+  MDXEditorMethods,
   quotePlugin,
   Separator,
   ShowSandpackInfo,
@@ -42,14 +43,15 @@ import {
 import "@mdxeditor/editor/style.css";
 import { Box } from "@mui/material";
 import i18next from "i18next";
-import { useEffect, useState } from "react";
+import { forwardRef, ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./editor.css";
 
 export interface MarkdownEditorProps {
   value: string;
   darkMode?: boolean;
-  initialValue: string;
+  /** diff 视图的对比基线；不传时用空文档（商品介绍这类长文不需要 diff）。 */
+  initialValue?: string;
   onChange: (value: string) => void;
   readOnly?: boolean;
   displayOnly?: boolean;
@@ -57,6 +59,13 @@ export interface MarkdownEditorProps {
   imageAutocompleteSuggestions?: string[] | null;
   imagePreviewHandler?: (imageSource: string) => Promise<string>;
   imageUploadHandler?: ((image: File) => Promise<string>) | null;
+  /**
+   * 编辑器区域的最小高度。默认铺满视口（全屏编辑器）；嵌在对话框里时传一个
+   * 固定值，避免把对话框撑到整屏。
+   */
+  minHeight?: string;
+  /** 追加到工具栏末尾的自定义内容，例如「插入网盘素材」。 */
+  extraToolbar?: ReactNode;
 }
 
 function whenInAdmonition(editorInFocus: EditorInFocus | null) {
@@ -81,7 +90,7 @@ function setEndOfContenteditable(contentEditableElement: HTMLElement) {
   }
 }
 
-const MarkdownEditor = (props: MarkdownEditorProps) => {
+const MarkdownEditor = forwardRef<MDXEditorMethods, MarkdownEditorProps>((props, ref) => {
   const { t } = useTranslation();
   const [nsLoaded, setNsLoaded] = useState(false);
   useEffect(() => {
@@ -94,7 +103,7 @@ const MarkdownEditor = (props: MarkdownEditorProps) => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        minHeight: props.displayOnly ? "100%" : "calc(100vh - 200px)",
+        minHeight: props.displayOnly ? "100%" : props.minHeight ?? "calc(100vh - 200px)",
       }}
       onKeyDown={(e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "s") {
@@ -105,6 +114,7 @@ const MarkdownEditor = (props: MarkdownEditorProps) => {
     >
       {nsLoaded && (
         <MDXEditor
+          ref={ref}
           className={props.darkMode ? "dark-theme dark-editor" : undefined}
           translation={(key, _defaultValue, interpolations) => {
             return t("markdown_editor:" + key, interpolations);
@@ -113,7 +123,7 @@ const MarkdownEditor = (props: MarkdownEditorProps) => {
           onChange={props.onChange}
           plugins={[
             diffSourcePlugin({
-              diffMarkdown: props.initialValue,
+              diffMarkdown: props.initialValue ?? "",
               viewMode: "rich-text",
             }),
             ...(props.displayOnly
@@ -158,6 +168,12 @@ const MarkdownEditor = (props: MarkdownEditorProps) => {
 
                                 <CreateLink />
                                 <InsertImage />
+                                {props.extraToolbar && (
+                                  <>
+                                    <Separator />
+                                    {props.extraToolbar}
+                                  </>
+                                )}
 
                                 <Separator />
 
@@ -263,6 +279,8 @@ const MarkdownEditor = (props: MarkdownEditorProps) => {
       />
     </Box>
   );
-};
+});
+
+MarkdownEditor.displayName = "MarkdownEditor";
 
 export default MarkdownEditor;

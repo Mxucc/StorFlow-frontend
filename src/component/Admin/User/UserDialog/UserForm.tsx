@@ -14,31 +14,55 @@ import {
   useTheme,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { useCallback, useContext, useState } from "react";
+import dayjs from "dayjs";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { sendCalibrateUserStorage } from "../../../../api/api";
-import { UserStatus } from "../../../../api/dashboard";
+import { getGroupList, sendCalibrateUserStorage } from "../../../../api/api";
+import { GroupEnt, UserStatus } from "../../../../api/dashboard";
 import { useAppDispatch } from "../../../../redux/hooks";
 import { DefaultCloseAction } from "../../../Common/Snackbar/snackbar";
 import { DenseFilledTextField, DenseSelect, SecondaryButton } from "../../../Common/StyledComponents";
 import UserAvatar from "../../../Common/User/UserAvatar";
 import { SquareMenuItem } from "../../../FileManager/ContextMenu/ContextMenu";
 import Delete from "../../../Icons/Delete";
-import SettingForm, { ProChip } from "../../../Pages/Setting/SettingForm";
+import SettingForm from "../../../Pages/Setting/SettingForm";
 import { CapacityBar } from "../../../Pages/Setting/StorageSetting";
 import GroupSelectionInput from "../../Common/GroupSelectionInput";
-import ProDialog from "../../Common/ProDialog";
 import { NoMarginHelperText } from "../../Settings/Settings";
 import { UserDialogContext } from "./UserDialog";
 
 const UserForm = ({ reload, setLoading }: { reload: () => void; setLoading: (loading: boolean) => void }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { t } = useTranslation("dashboard");
   const { formRef, values, setUser } = useContext(UserDialogContext);
-  const [proOpen, setProOpen] = useState(false);
+
+  // 原始用户组需要展示组名，这里加载一次用户组列表用于只读解析。
+  const [groups, setGroups] = useState<GroupEnt[]>([]);
+  useEffect(() => {
+    dispatch(
+      getGroupList({
+        page: 1,
+        page_size: 1000,
+        order_by: "id",
+        order_direction: "asc",
+      }),
+    )
+      .then((res) => setGroups(res.groups))
+      .catch(() => undefined);
+  }, [dispatch]);
+
+  const previousGroupName = useMemo(() => {
+    const id = values.previous_group ?? 0;
+    if (!id) {
+      return "";
+    }
+    return groups.find((g) => g.id === id)?.name ?? `#${id}`;
+  }, [groups, values.previous_group]);
 
   const removeAvatar = useCallback(() => {
     setUser((prev) => ({ ...prev, avatar: undefined }));
@@ -109,7 +133,6 @@ const UserForm = ({ reload, setLoading }: { reload: () => void; setLoading: (loa
 
   return (
     <Box component={"form"} ref={formRef} onSubmit={(e) => e.preventDefault()}>
-      <ProDialog open={proOpen} onClose={() => setProOpen(false)} />
       <Stack spacing={isMobile ? 2 : 3} direction={isMobile ? "column" : "row"}>
         <Stack spacing={isMobile ? 2 : 3} direction={"column"} sx={{ minWidth: 200 }}>
           <SettingForm title={t("user.avatar")} noContainer lgWidth={12}>
@@ -123,7 +146,9 @@ const UserForm = ({ reload, setLoading }: { reload: () => void; setLoading: (loa
               user={{
                 created_at: values.created_at,
                 nickname: values.nick ?? "",
-                id: values.avatar ? values.hash_id ?? "" : "dummy",
+                id: values.hash_id ?? "",
+                // 未设置头像时留空，避免请求必定 404 的 /user/avatar/:id
+                avatar: values.avatar,
               }}
             />
             <Collapse in={!!values.avatar} unmountOnExit>
@@ -150,11 +175,12 @@ const UserForm = ({ reload, setLoading }: { reload: () => void; setLoading: (loa
           <Box>
             <SecondaryButton
               sx={{ mt: 1 }}
-              onClick={() => setProOpen(true)}
+              onClick={() => navigate(`/admin/file?owner=${values.hash_id}`)}
               variant="contained"
               startIcon={<OpenInNew />}
+              disabled={!values.hash_id}
             >
-              {t("user.openUserFiles")} <ProChip label="Pro" color="primary" size="small" />
+              {t("user.openUserFiles")}
             </SecondaryButton>
           </Box>
         </Stack>
@@ -183,7 +209,7 @@ const UserForm = ({ reload, setLoading }: { reload: () => void; setLoading: (loa
             <SettingForm title={t("user.group")} noContainer lgWidth={6}>
               <GroupSelectionInput value={values.group_users?.toString() ?? ""} onChange={onGroupChange} fullWidth />
             </SettingForm>
-            <SettingForm title={t("application:vas.points")} noContainer lgWidth={6} pro>
+            <SettingForm title={t("application:vas.points")} noContainer lgWidth={6}>
               <DenseFilledTextField
                 slotProps={{
                   htmlInput: {
@@ -193,7 +219,7 @@ const UserForm = ({ reload, setLoading }: { reload: () => void; setLoading: (loa
                   },
                 }}
                 fullWidth
-                value={0}
+                value={values.points ?? 0}
               />
             </SettingForm>
             <SettingForm title={t("user.password")} noContainer lgWidth={6}>
@@ -210,18 +236,24 @@ const UserForm = ({ reload, setLoading }: { reload: () => void; setLoading: (loa
                 type={"password"}
               />
             </SettingForm>
-            <SettingForm title={t("user.originUserGroup")} noContainer lgWidth={6} pro>
-              <GroupSelectionInput
-                value={" "}
-                onChange={() => {}}
-                emptyText={t("user.noOriginUserGroup")}
-                emptyValue={" "}
+            <SettingForm title={t("user.originUserGroup")} noContainer lgWidth={6}>
+              <DenseFilledTextField
                 fullWidth
+                slotProps={{ htmlInput: { readOnly: true } }}
+                value={previousGroupName || t("user.noOriginUserGroup")}
               />
               <NoMarginHelperText>{t("user.originUserGroupDes")}</NoMarginHelperText>
             </SettingForm>
-            <SettingForm title={t("user.groupExpired")} noContainer lgWidth={6} pro>
-              <DenseFilledTextField fullWidth value={""} />
+            <SettingForm title={t("user.groupExpired")} noContainer lgWidth={6}>
+              <DenseFilledTextField
+                fullWidth
+                slotProps={{ htmlInput: { readOnly: true } }}
+                value={
+                  values.group_expires && !values.group_expires.startsWith("0001")
+                    ? dayjs(values.group_expires).format("YYYY-MM-DD HH:mm")
+                    : ""
+                }
+              />
               <NoMarginHelperText>{t("user.groupExpiredDes")}</NoMarginHelperText>
             </SettingForm>
             <SettingForm title={t("user.createdAt")} noContainer lgWidth={6}>

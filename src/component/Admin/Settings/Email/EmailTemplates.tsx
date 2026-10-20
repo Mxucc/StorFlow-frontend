@@ -1,11 +1,10 @@
 import { ExpandMoreRounded } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
-import SettingForm, { ProChip } from "../../../Pages/Setting/SettingForm.tsx";
+import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
 import { MagicVar } from "../../Common/MagicVarDialog.tsx";
-import ProDialog from "../../Common/ProDialog.tsx";
 import { SettingContext } from "../SettingWrapper.tsx";
 import { SettingSection, SettingSectionContent } from "../Settings.tsx";
 import { AccordionSummary, StyledAccordion } from "../UserSession/SSOSettings.tsx";
@@ -15,19 +14,18 @@ interface EmailTemplate {
   title: string;
   description: string;
   magicVars: MagicVar[];
-  pro: boolean;
 }
 
 const commonMagicVars: MagicVar[] = [
   {
     value: "settings.mainTitle",
     name: "{{ .CommonContext.SiteBasic.Name }}",
-    example: "Cloudreve",
+    example: "StorFlow",
   },
   {
     value: "settings.siteDescription",
     name: "{{ .CommonContext.SiteBasic.Description }}",
-    example: "Another Cloudreve instance",
+    example: "Another StorFlow instance",
   },
   {
     value: "settings.siteID",
@@ -37,17 +35,17 @@ const commonMagicVars: MagicVar[] = [
   {
     value: "settings.logo",
     name: "{{ .CommonContext.Logo.Normal }}",
-    example: "https://cloudreve.org/logo.svg",
+    example: "/static/img/brand/logo.svg",
   },
   {
     value: "settings.logo",
     name: "{{ .CommonContext.Logo.Light }}",
-    example: "https://cloudreve.org/logo_light.svg",
+    example: "/static/img/brand/logo-light.svg",
   },
   {
     value: "settings.siteURL",
     name: "{{ .CommonContext.SiteUrl }}",
-    example: "https://cloudreve.org",
+    example: "https://example.com",
   },
 ];
 
@@ -60,7 +58,7 @@ const userMagicVars: MagicVar[] = [
   {
     value: "application:login.email",
     name: "{{ .User.Email }}",
-    example: "example@cloudreve.org",
+    example: "noreply@example.com",
   },
   {
     value: "application:setting.nickname",
@@ -74,18 +72,24 @@ const userMagicVars: MagicVar[] = [
   },
 ];
 
+// 回执 / 容量超额邮件正文里按钮指向的地址（订单为账户设置页，超额为容量管理页）。
+const actionUrlMagicVar: MagicVar = {
+  value: "settings.siteURL",
+  name: "{{ .Url }}",
+  example: "https://example.com/settings",
+};
+
 const EmailTemplates: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const { setSettings, values } = useContext(SettingContext);
-  const [proOpen, setProOpen] = useState(false);
 
   // Template setting keys
-  const templateSettings = [
+  const templateSettings: EmailTemplate[] = [
     {
       key: "mail_receipt_template",
       title: "receiptEmailTemplate",
       description: "receiptEmailTemplateDes",
-      pro: true,
+      magicVars: [...commonMagicVars, ...userMagicVars, actionUrlMagicVar],
     },
     {
       key: "mail_activation_template",
@@ -97,7 +101,7 @@ const EmailTemplates: React.FC = () => {
         {
           value: "settings.activateUrl",
           name: "{{ .Url }}",
-          example: "https://cloudreve.org/activate",
+          example: "https://example.com/activate",
         },
       ],
     },
@@ -105,7 +109,7 @@ const EmailTemplates: React.FC = () => {
       key: "mail_exceed_quota_template",
       title: "quotaExceededEmailTemplate",
       description: "quotaExceededEmailTemplateDes",
-      pro: true,
+      magicVars: [...commonMagicVars, ...userMagicVars, actionUrlMagicVar],
     },
     {
       key: "mail_reset_template",
@@ -117,38 +121,23 @@ const EmailTemplates: React.FC = () => {
         {
           value: "settings.resetUrl",
           name: "{{ .Url }}",
-          example: "https://cloudreve.org/reset",
+          example: "https://example.com/reset",
         },
       ],
     },
   ];
 
-  const handleProClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setProOpen(true);
-  };
-
   return (
     <SettingSection>
-      <ProDialog open={proOpen} onClose={() => setProOpen(false)} />
       <Typography variant="h6" gutterBottom>
         {t("settings.emailTemplates")}
       </Typography>
       <SettingSectionContent>
         <Box>
           {templateSettings.map((template) => (
-            <StyledAccordion
-              disableGutters
-              onClick={template.pro ? handleProClick : undefined}
-              key={template.key}
-              expanded={template.pro ? false : undefined}
-              TransitionProps={{ unmountOnExit: true }}
-            >
+            <StyledAccordion disableGutters key={template.key} TransitionProps={{ unmountOnExit: true }}>
               <AccordionSummary expandIcon={<ExpandMoreRounded />}>
-                <Typography>
-                  {t("settings." + template.title)}
-                  {template.pro && <ProChip label="Pro" color="primary" size="small" />}
-                </Typography>
+                <Typography>{t("settings." + template.title)}</Typography>
               </AccordionSummary>
               <AccordionDetails sx={{ display: "block" }}>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>

@@ -14,13 +14,40 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "prompt",
+      // autoUpdate：新版本发布后 Service Worker 立即接管并刷新页面。自建部署里旧包被 SW
+      // 长期缓存会让用户看到「改完了但页面没变」的假象（Pro 徽标、旧布局等），因此这里不做
+      // 手动确认。若希望保留「有新版本，请刷新」的提示流程，改回 "prompt" 即可。
+      registerType: "autoUpdate",
       injectRegister: "auto",
       manifest: false,
       workbox: {
-        globIgnores: ["**/*leaflet*", "**/*mapbox*", "**/*Leaflet*", "**/*Mapbox*"],
+        // 注意：index.html 必须排除在 precache 之外。
+        //
+        // workbox-precaching 对以 `/` 结尾的请求会自动追加 index.html 去找缓存条目
+        // （目录索引匹配），而这一步发生在 NavigationRoute 的 denylist 之前。只要
+        // precache 里有 index.html，访问 `/` 就会直接命中缓存的 SPA 壳，永远打不开
+        // Go 反向代理给 Astro 渲染的官网首页 —— 加多少 denylist 都没用。
+        globIgnores: ["**/*leaflet*", "**/*mapbox*", "**/*Leaflet*", "**/*Mapbox*", "index.html"],
+        // 插件默认会补上 `navigateFallback: "index.html"`，必须显式关掉：index.html 已经
+        // 不在 precache 里，workbox 的 createHandlerBoundToURL 会直接抛 non-precached-url，
+        // 让整个 Service Worker 安装失败。导航由下面的 NetworkFirst 负责。
+        navigateFallback: undefined,
         maximumFileSizeToCacheInBytes: 10000000,
-        navigateFallbackDenylist: [/^\/pdfviewer.html/, /^\/api\/(.+)/, /^\/f\/(.+)/, /^\/s\/(.+)/],
+        // 导航请求统一 NetworkFirst：在线时始终取服务端最新 HTML（官网首页 / 小店前台
+        // 来自 Astro，控制台 / 登录页来自内嵌 SPA），离线时才回退到缓存。
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }: { request: Request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "storflow-pages",
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 32 },
+            },
+          },
+        ],
+        skipWaiting: true,
+        clientsClaim: true,
       },
       devOptions: {
         enabled: true,
@@ -54,9 +81,6 @@ export default defineConfig({
         await fs.writeFile(path, JSON.stringify(version));
       },
     },
-    // mkcert({
-    //   hosts: ["devv5.cloudreve.org"],
-    // }),
   ],
   define: {
     __ASSETS_VERSION__: JSON.stringify(process.env.npm_package_version),

@@ -47,7 +47,7 @@ const FullTextSearchSetting = () => {
             {t("settings.ftsTitle")}
             <IconButton
               onClick={() => {
-                window.open("https://docs.cloudreve.org/usage/search/fts", "_blank");
+                window.open("https://github.com/Mxucc/StorFlow", "_blank");
               }}
             >
               <QuestionCircle />

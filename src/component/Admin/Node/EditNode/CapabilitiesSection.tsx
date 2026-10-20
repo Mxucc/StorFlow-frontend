@@ -429,7 +429,7 @@ const CapabilitiesSection = () => {
             {t("node.remoteDownload")}
             <IconButton
               onClick={() => {
-                window.open("https://docs.cloudreve.org/usage/remote-download", "_blank");
+                window.open("https://github.com/Mxucc/StorFlow", "_blank");
               }}
             >
               <QuestionCircle />

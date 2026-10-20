@@ -20,7 +20,7 @@ const MobileCallback = () => {
       user_id: SessionManager.currentLoginOrNull()?.user.id ?? "",
     };
     const search = new URLSearchParams(params);
-    window.location.href = `cloudreve://mount?${search.toString()}`;
+    window.location.href = `storflow://mount?${search.toString()}`;
   }, []);
 
   return (

@@ -32,6 +32,7 @@ import NumberPropsContent from "./NumberPropsContent.tsx";
 import RatingPropsItem from "./RatingPropsItem.tsx";
 import SelectPropsContent from "./SelectPropsContent.tsx";
 import TextPropsContent from "./TextPropsContent.tsx";
+import { translatePropName } from "./translatePropName.ts";
 import UserPropsContent from "./UserPropsContent.tsx";
 
 export interface CustomPropsCardProps {
@@ -51,7 +52,7 @@ export interface PropsContentProps {
   fullSize?: boolean;
 }
 
-const PropsCard = styled(StyledButtonBase)(({ theme }) => ({
+const PropsCard = styled(StyledButtonBase)(() => ({
   flexDirection: "column",
   alignItems: "flex-start",
   gap: 9,
@@ -94,6 +95,10 @@ export const getPropsContent = (
           readOnly={readOnly}
           fullSize={fullSize}
         />
+      );
+    case CustomPropsType.user:
+      return (
+        <UserPropsContent prop={prop} onChange={onChange} loading={loading} readOnly={readOnly} fullSize={fullSize} />
       );
     case CustomPropsType.link:
       return (
@@ -174,7 +179,7 @@ const CustomPropsCard = ({ prop, loading, onPropPatch, onPropDelete, readOnly }:
         </Grow>
         {prop.props.icon && <Icon width={24} height={24} color={theme.palette.action.active} icon={prop.props.icon} />}
         <Typography variant={"body2"} color="textPrimary" fontWeight={500} sx={{ flexGrow: 1 }}>
-          {prop.props.type === CustomPropsType.boolean ? Content : t(prop.props.name)}
+          {prop.props.type === CustomPropsType.boolean ? Content : translatePropName(prop.props.name)}
         </Typography>
       </Box>
 

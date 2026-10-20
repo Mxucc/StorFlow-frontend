@@ -13,6 +13,7 @@ import { ViewTaskAction } from "../../Common/Snackbar/snackbar.tsx";
 import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
 import Password from "../../Icons/Password.tsx";
 import { FileManagerIndex } from "../FileManager.tsx";
+import TaskNodeSelector from "./TaskNodeSelector.tsx";
 
 const ExtractArchive = () => {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ const ExtractArchive = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(false);
   const [path, setPath] = useState("");
+  const [nodeID, setNodeID] = useState<string | undefined>(undefined);
   const [encoding, setEncoding] = useState(defaultEncodingValue);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -70,6 +72,7 @@ const ExtractArchive = () => {
         encoding: showEncodingOption && encoding != defaultEncodingValue ? encoding : undefined,
         password: showPasswordOption && password ? password : undefined,
         file_mask: mask ?? undefined,
+        node_id: nodeID,
       }),
     )
       .then(() => {
@@ -83,7 +86,7 @@ const ExtractArchive = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [target, encoding, path, showPasswordOption, showEncodingOption, password, mask]);
+  }, [target, encoding, path, showPasswordOption, showEncodingOption, password, mask, nodeID]);
 
   return (
     <DraggableDialog
@@ -159,6 +162,13 @@ const ExtractArchive = () => {
               />
             </Grid2>
           )}
+          <Grid2
+            size={{
+              xs: 12,
+            }}
+          >
+            <TaskNodeSelector value={nodeID} onChange={setNodeID} />
+          </Grid2>
         </Grid2>
       </DialogContent>
     </DraggableDialog>

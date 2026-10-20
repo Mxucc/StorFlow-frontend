@@ -270,6 +270,16 @@ const BasicInfoSection = () => {
     [setPolicy],
   );
 
+  const patchYun139Settings = useCallback(
+    (patch: Partial<NonNullable<StoragePolicy["settings"]>>) => {
+      setPolicy((p: StoragePolicy) => ({
+        ...p,
+        settings: { ...p.settings, ...patch },
+      }));
+    },
+    [setPolicy],
+  );
+
   const onTokenChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setPolicy((p: StoragePolicy) => ({
@@ -314,6 +324,53 @@ const BasicInfoSection = () => {
                   <NoMarginHelperText>{t("policy.upyunTokenSecretDes")}</NoMarginHelperText>
                 </SettingForm>
               </Collapse>
+            )}
+            {values.type === PolicyType.yun139 && (
+              <>
+                <SettingForm title={t("policy.yun139Auth")} lgWidth={5}>
+                  <DenseFilledTextField
+                    fullWidth
+                    value={values.settings?.yun139_token ?? ""}
+                    onChange={(e) => patchYun139Settings({ yun139_token: e.target.value || undefined })}
+                  />
+                  <NoMarginHelperText>{t("policy.yun139AuthDes")}</NoMarginHelperText>
+                </SettingForm>
+                <SettingForm title={t("policy.yun139Username")} lgWidth={5}>
+                  <DenseFilledTextField
+                    fullWidth
+                    value={values.settings?.yun139_username ?? ""}
+                    onChange={(e) => patchYun139Settings({ yun139_username: e.target.value || undefined })}
+                  />
+                  <NoMarginHelperText>{t("policy.yun139UsernameDes")}</NoMarginHelperText>
+                </SettingForm>
+                <SettingForm title={t("policy.yun139Password")} lgWidth={5}>
+                  <DenseFilledTextField
+                    fullWidth
+                    type="password"
+                    value={values.settings?.yun139_password ?? ""}
+                    onChange={(e) => patchYun139Settings({ yun139_password: e.target.value || undefined })}
+                  />
+                  <NoMarginHelperText>{t("policy.yun139PasswordDes")}</NoMarginHelperText>
+                </SettingForm>
+                <SettingForm title={t("policy.yun139MailCookies")} lgWidth={5}>
+                  <DenseFilledTextField
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    value={values.settings?.yun139_mail_cookies ?? ""}
+                    onChange={(e) => patchYun139Settings({ yun139_mail_cookies: e.target.value || undefined })}
+                  />
+                  <NoMarginHelperText>{t("policy.yun139MailCookiesDes")}</NoMarginHelperText>
+                </SettingForm>
+                <SettingForm title={t("policy.yun139RootFolder")} lgWidth={5}>
+                  <DenseFilledTextField
+                    fullWidth
+                    value={values.settings?.yun139_root_folder_id ?? ""}
+                    onChange={(e) => patchYun139Settings({ yun139_root_folder_id: e.target.value || undefined })}
+                  />
+                  <NoMarginHelperText>{t("policy.yun139RootFolderDes")}</NoMarginHelperText>
+                </SettingForm>
+              </>
             )}
             {showEndpoint && (
               <SettingForm title={t(policyProps.endpointName ?? "")} lgWidth={5}>
@@ -466,7 +523,7 @@ const BasicInfoSection = () => {
               sx={{ mt: 1 }}
               onClick={handleCreateCors}
             >
-              {t("policy.letCloudreveHelpMe")}
+              {t("policy.letStorflowHelpMe")}
             </SecondaryButton>
           </SettingForm>
         )}

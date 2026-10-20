@@ -7,6 +7,7 @@ import { CustomProps } from "../../../../api/explorer.ts";
 import Add from "../../../Icons/Add.tsx";
 import { SquareMenuItem } from "../../ContextMenu/ContextMenu.tsx";
 import { CustomPropsItem } from "./CustomProps.tsx";
+import { translatePropName } from "./translatePropName.ts";
 
 const BorderedCard = styled(Box)(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
@@ -97,7 +98,7 @@ const AddButton = ({ options, existingPropIds, onPropAdd, disabled }: AddButtonP
                 primary: { variant: "body2" },
               }}
             >
-              {t(option.name)}
+              {translatePropName(option.name)}
             </ListItemText>
           </SquareMenuItem>
         ))}

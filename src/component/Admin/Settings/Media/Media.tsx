@@ -168,7 +168,7 @@ const Media = () => {
                 <Trans
                   ns="dashboard"
                   i18nKey="settings.generatorProxyWarning"
-                  components={[<Link href="https://docs.cloudreve.org/usage/thumbnails" target="_blank" />]}
+                  components={[<Link href="https://github.com/Mxucc/StorFlow" target="_blank" />]}
                 />
               </Alert>
               <Generators values={values} setSetting={setSettings} />
@@ -185,7 +185,7 @@ const Media = () => {
                 <Trans
                   ns="dashboard"
                   i18nKey="settings.extractMediaMetaDes"
-                  components={[<Link href="https://docs.cloudreve.org/usage/media-meta" target="_blank" />]}
+                  components={[<Link href="https://github.com/Mxucc/StorFlow" target="_blank" />]}
                 />
               </Alert>
               <Extractors values={values} setSetting={setSettings} />

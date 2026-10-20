@@ -63,7 +63,7 @@
     "appRequestsAccess": "{{appName}} запрашивает доступ к вашей учётной записи",
     "consentDescription": "Вы разрешаете <0>{{appName}}</0> доступ к информации учётной записи <1>{{userEmail}}</1>:",
     "deny": "Отмена",
-    "desktop": "Настольный клиент Cloudreve",
+    "desktop": "Настольный клиент StorFlow",
     "scope": {
       "readonly": "Только чтение",
       "readwrite": "Чтение и запись",

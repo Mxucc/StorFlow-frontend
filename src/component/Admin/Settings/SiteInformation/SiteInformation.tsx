@@ -64,9 +64,15 @@ const SiteInformation = () => {
                 <NoMarginHelperText>{t("settings.customFooterHTMLDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
-            <SettingForm title={t("settings.announcement")} lgWidth={5} pro>
+            <SettingForm title={t("settings.announcement")} lgWidth={5}>
               <FormControl fullWidth>
-                <DenseFilledTextField inputProps={{ readOnly: true }} fullWidth multiline rows={4} />
+                <DenseFilledTextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  value={values.siteAnnouncement ?? ""}
+                  onChange={(e) => setSettings({ siteAnnouncement: e.target.value })}
+                />
                 <NoMarginHelperText>{t("settings.announcementDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
@@ -229,22 +235,23 @@ const SiteInformation = () => {
                 <NoMarginHelperText>{t("vas.showAppPromotionDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
-            <SettingForm title={t("vas.appFeedback")} lgWidth={5} pro>
+            <SettingForm title={t("vas.appFeedback")} lgWidth={5}>
               <FormControl fullWidth>
                 <DenseFilledTextField
                   fullWidth
-                  slotProps={{
-                    input: {
-                      readOnly: true,
-                    },
-                  }}
+                  value={values.app_feedback ?? ""}
+                  onChange={(e) => setSettings({ app_feedback: e.target.value })}
                 />
                 <NoMarginHelperText>{t("vas.appLinkDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
-            <SettingForm title={t("vas.appForum")} lgWidth={5} pro>
+            <SettingForm title={t("vas.appForum")} lgWidth={5}>
               <FormControl fullWidth>
-                <DenseFilledTextField fullWidth slotProps={{ input: { readOnly: true } }} />
+                <DenseFilledTextField
+                  fullWidth
+                  value={values.app_forum ?? ""}
+                  onChange={(e) => setSettings({ app_forum: e.target.value })}
+                />
                 <NoMarginHelperText>{t("vas.appLinkDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>

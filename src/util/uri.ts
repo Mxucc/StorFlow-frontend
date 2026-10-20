@@ -2,7 +2,7 @@ import path from "path-browserify";
 import { FileType, Metadata } from "../api/explorer.ts";
 import SessionManager from "../session";
 
-export const CrUriPrefix = "cloudreve://";
+export const CrUriPrefix = "storflow://";
 const HttpUriPrefix = "http://";
 
 export const Filesystem = {
@@ -60,7 +60,7 @@ export default class CrUri {
   private url: URL;
   constructor(u: string) {
     if (!u.startsWith(CrUriPrefix)) {
-      throw new Error("Invalid cloudreve uri");
+      throw new Error("Invalid storflow uri");
     }
 
     // replacing prefix with standard HTTP for compatibility
@@ -317,5 +317,5 @@ export default class CrUri {
 }
 
 export const newMyUri = (uid?: string): CrUri => {
-  return uid ? new CrUri(`cloudreve://${uid}@my`) : new CrUri("cloudreve://my");
+  return uid ? new CrUri(`storflow://${uid}@my`) : new CrUri("storflow://my");
 };

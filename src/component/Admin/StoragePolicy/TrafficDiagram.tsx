@@ -29,7 +29,7 @@ enum Source {
 }
 
 enum Node {
-  cloudreve = "cloudreve",
+  server = "server",
   proxy = "proxy",
   storage_node = "storage_node",
   storage_node_internal = "storage_node_internal",
@@ -49,7 +49,7 @@ const NodeIcon = forwardRef(({ type, size = 40, storageNodeTitle, proxyNodeTitle
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const icon = useMemo(() => {
     switch (type) {
-      case Node.cloudreve:
+      case Node.server:
         return <Home sx={{ width: size, height: size, color: (t) => t.palette.action.active }} />;
       case Node.proxy:
         return <GlobeFilled sx={{ width: size, height: size, color: (t) => t.palette.action.active }} />;
@@ -84,8 +84,8 @@ const NodeIcon = forwardRef(({ type, size = 40, storageNodeTitle, proxyNodeTitle
 
   const title = useMemo(() => {
     switch (type) {
-      case Node.cloudreve:
-        return "Cloudreve";
+      case Node.server:
+        return "StorFlow";
       case Node.proxy:
         return proxyNodeTitle ?? t("policy.customProxy");
       case Node.storage_node:
@@ -132,11 +132,11 @@ export const TrafficDiagram = ({
     }
     if (variant == "upload") {
       if (proxyed || source == Source.dav || source == Source.web_edit) {
-        res.push(Node.cloudreve);
+        res.push(Node.server);
       }
     } else {
       if (proxyed || source == Source.wopi || source == Source.encrypted_file) {
-        res.push(Node.cloudreve);
+        res.push(Node.server);
       }
 
       if (cdn) {

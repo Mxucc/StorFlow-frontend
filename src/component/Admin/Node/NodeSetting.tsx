@@ -71,7 +71,7 @@ const NodeSetting = () => {
         <PageHeader
           title={t("dashboard:nav.nodes")}
           secondaryAction={
-            <IconButton onClick={() => window.open("https://docs.cloudreve.org/usage/slave-node", "_blank")}>
+            <IconButton onClick={() => window.open("https://github.com/Mxucc/StorFlow", "_blank")}>
               <QuestionCircle />
             </IconButton>
           }

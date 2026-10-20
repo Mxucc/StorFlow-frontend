@@ -84,16 +84,21 @@ const SignUp = () => {
     }
 
     setLoading(true);
+    // 邀请返利：从 /shop/<slug>?ref=<code> 进入时透传邀请码；注册后回到 redirect 页面继续购买。
+    const ref = query.get("ref") ?? undefined;
+    const redirect = query.get("redirect");
+    const redirectQuery = redirect ? `&redirect=${encodeURIComponent(redirect)}` : "";
     dispatch(
       sendSinUp({
         email,
         password,
         language: i18next.language,
+        ref,
         ...captchaState.current,
       }),
     )
       .then(() => {
-        navigate("/session?phase=email&email=" + encodeURIComponent(email));
+        navigate("/session?phase=email&email=" + encodeURIComponent(email) + redirectQuery);
         enqueueSnackbar({
           message: t("login.signUpSuccess"),
           variant: "success",
@@ -230,7 +235,13 @@ const SignUp = () => {
                       <Trans
                         ns={"application"}
                         i18nKey={"login.haveAccountSignInNow"}
-                        components={[<Link underline="hover" component={RouterLink} to="/session" />]}
+                        components={[
+                          <Link
+                            underline="hover"
+                            component={RouterLink}
+                            to={"/session" + (query.toString() ? `?${query.toString()}` : "")}
+                          />,
+                        ]}
                       />
                     </Box>
                     {showFooter && (

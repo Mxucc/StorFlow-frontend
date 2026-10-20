@@ -1,4 +1,4 @@
-import { Box, FormControl, SelectChangeEvent, Typography } from "@mui/material";
+import { Box, Checkbox, FormControl, ListItemText, SelectChangeEvent } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getStoragePolicyList } from "../../../../api/api";
@@ -8,8 +8,8 @@ import FacebookCircularProgress from "../../../Common/CircularProgress";
 import { DenseSelect, SquareChip } from "../../../Common/StyledComponents";
 import { SquareMenuItem } from "../../../FileManager/ContextMenu/ContextMenu";
 export interface PolicySelectionInputProps {
-  value: number;
-  onChange: (value: number) => void;
+  value: number[];
+  onChange: (value: number[]) => void;
 }
 
 const PolicySelectionInput = ({ value, onChange }: PolicySelectionInputProps) => {
@@ -23,7 +23,8 @@ const PolicySelectionInput = ({ value, onChange }: PolicySelectionInputProps) =>
     const {
       target: { value },
     } = event;
-    onChange(value as number);
+    // 选择顺序即优先级：第一个策略会被用作该用户组的默认上传策略。
+    onChange(typeof value === "string" ? [] : (value as number[]));
   };
 
   useEffect(() => {
@@ -49,8 +50,8 @@ const PolicySelectionInput = ({ value, onChange }: PolicySelectionInputProps) =>
   return (
     <FormControl fullWidth>
       <DenseSelect
+        multiple
         value={value}
-        required
         onChange={handleChange}
         sx={{
           minHeight: 39,
@@ -66,32 +67,30 @@ const PolicySelectionInput = ({ value, onChange }: PolicySelectionInputProps) =>
             },
           },
         }}
-        renderValue={(selected: number) => (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-            {!loading ? (
-              <SquareChip size="small" key={selected} label={policyMap[selected]?.name} />
-            ) : (
-              <FacebookCircularProgress size={20} sx={{ mt: "1px" }} />
-            )}
-          </Box>
-        )}
+        renderValue={(selected: number[]) =>
+          !loading ? (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              {selected.map((id) => (
+                <SquareChip size="small" key={id} label={policyMap[id]?.name ?? id} />
+              ))}
+            </Box>
+          ) : (
+            <FacebookCircularProgress size={20} sx={{ mt: "1px" }} />
+          )
+        }
       >
         {policies.length > 0 &&
           policies.map((policy) => (
             <SquareMenuItem key={policy.id} value={policy.id}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
+              <Checkbox size={"small"} checked={value.indexOf(policy.id) > -1} />
+              <ListItemText
+                slotProps={{
+                  primary: { variant: "body2", fontWeight: 600 },
+                  secondary: { variant: "caption" },
                 }}
-              >
-                <Typography variant={"body2"} fontWeight={600}>
-                  {policy.name}
-                </Typography>
-                <Typography variant={"caption"} color={"textSecondary"}>
-                  {t(`policy.${policy.type}`)}
-                </Typography>
-              </Box>
+                primary={policy.name}
+                secondary={t(`policy.${policy.type}`)}
+              />
             </SquareMenuItem>
           ))}
       </DenseSelect>

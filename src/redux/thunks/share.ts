@@ -32,6 +32,9 @@ export function createOrUpdateShareLink(
       show_readme: setting.show_readme,
       downloads: setting.downloads && setting.downloads_val.value > 0 ? setting.downloads_val.value : undefined,
       expire: setting.expires && setting.expires_val.value > 0 ? setting.expires_val.value : undefined,
+      pay_enabled: setting.pay_enabled,
+      price: setting.pay_enabled ? setting.price : undefined,
+      is_default: setting.is_default,
     };
 
     const res = await dispatch(existed ? sendUpdateShare(req, existed) : sendCreateShare(req));

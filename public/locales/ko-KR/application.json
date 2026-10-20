@@ -63,7 +63,7 @@
     "appRequestsAccess": "{{appName}}이(가) 귀하의 계정에 대한 액세스를 요청하고 있습니다",
     "consentDescription": "<0>{{appName}}</0>에 계정 <1>{{userEmail}}</1>의 정보에 대한 액세스를 허용하려고 합니다:",
     "deny": "취소",
-    "desktop": "Cloudreve 데스크톱 클라이언트",
+    "desktop": "StorFlow 데스크톱 클라이언트",
     "scope": {
       "readonly": "읽기 전용",
       "readwrite": "읽기 및 쓰기",

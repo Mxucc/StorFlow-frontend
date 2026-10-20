@@ -1,164 +1,160 @@
-import { alpha, Box, Grid, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Grid, Stack, Typography, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useAppSelector } from "../../../redux/hooks.ts";
+import { sfGradients, sfShadow } from "../../../theme/storflow.ts";
+import AppLinks from "./AppLinks.tsx";
 
+const Step = ({ index, children }: { index: number; children: React.ReactNode }) => (
+  <Stack direction={"row"} spacing={2} alignItems={"flex-start"}>
+    <Box
+      sx={{
+        width: 26,
+        height: 26,
+        borderRadius: "9px",
+        flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 13,
+        fontWeight: 700,
+        color: "#FFFFFF",
+        backgroundImage: sfGradients.accent,
+      }}
+    >
+      {index}
+    </Box>
+    <Typography variant={"body2"} color={"text.secondary"} sx={{ pt: 0.5 }}>
+      {children}
+    </Typography>
+  </Stack>
+);
+
+/** 抽象的桌面窗口示意图（纯 CSS）。 */
+const WindowMockup = () => {
+  const theme = useTheme();
+  return (
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: { xs: 300, md: 420 } }}>
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 460,
+          borderRadius: "14px",
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
+          backgroundColor: "background.paper",
+          boxShadow: sfShadow.float,
+        }}
+      >
+        <Box
+          sx={{
+            height: 34,
+            px: 1.5,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.75,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            backgroundColor: theme.palette.action.hover,
+          }}
+        >
+          {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
+            <Box key={c} sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: c, opacity: 0.85 }} />
+          ))}
+        </Box>
+        <Box sx={{ display: "flex", minHeight: 240 }}>
+          <Box
+            sx={{
+              width: 132,
+              flexShrink: 0,
+              p: 1.5,
+              borderRight: "1px solid",
+              borderColor: "divider",
+              backgroundImage: sfGradients.sidebar,
+            }}
+          >
+            <Box sx={{ height: 10, width: "72%", borderRadius: 4, backgroundColor: "rgba(255,255,255,0.5)" }} />
+            {[0, 1, 2, 3].map((i) => (
+              <Box
+                key={i}
+                sx={{
+                  height: 8,
+                  width: `${52 + ((i * 11) % 34)}%`,
+                  mt: 1.6,
+                  borderRadius: 4,
+                  backgroundColor: i === 1 ? "rgba(124,144,255,0.85)" : "rgba(255,255,255,0.22)",
+                }}
+              />
+            ))}
+          </Box>
+          <Box sx={{ flexGrow: 1, p: 2, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.5 }}>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <Box key={i} sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                <Box
+                  sx={{
+                    height: 46,
+                    borderRadius: "10px",
+                    backgroundImage: sfGradients.tint,
+                    border: "1px solid",
+                    borderColor: "divider",
+                  }}
+                />
+                <Box
+                  sx={{ height: 7, width: `${54 + ((i * 9) % 32)}%`, borderRadius: 4, backgroundColor: "action.hover" }}
+                />
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+/**
+ * 桌面端接入引导：不再宣传第三方客户端，改为「浏览器安装为桌面应用 + WebDAV 挂载」两条路径。
+ */
 const DesktopAppPromotion = () => {
   const title = useAppSelector((state) => state.siteConfig.basic.config.title);
-  const { t, i18n } = useTranslation();
-  const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up("md"), {
-    defaultMatches: true,
-  });
+  const { t } = useTranslation();
 
   return (
     <Grid
       container
+      spacing={{ xs: 2, md: 6 }}
       sx={{
         px: 2,
         pt: 4,
         pb: 4,
       }}
     >
-      <Grid item container alignItems={"center"} xs={12} md={6}>
-        <Box data-aos={isMd ? "fade-right" : "fade-up"}>
-          <Box marginBottom={2}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-              }}
-              color="text.primary"
-            >
-              {t("setting.desktopAppTitleLead")}
-              <Typography
-                color={"primary"}
-                component={"span"}
-                variant={"inherit"}
-                sx={{
-                  background: `linear-gradient(180deg, transparent 82%, ${alpha(
-                    theme.palette.secondary.main,
-                    0.3,
-                  )} 0%)`,
-                }}
-              >
-                {title}
-              </Typography>
-              {t("setting.desktopAppTitleTrail")}
-            </Typography>
-          </Box>
-          <Box marginBottom={3}>
-            <Typography variant="h6" component="p" color="text.secondary">
-              {t("setting.desktopAppDescription")}
-            </Typography>
-          </Box>
-          <Box
-            display="flex"
-            flexDirection={{ xs: "column", sm: "row" }}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            gap={2}
-            marginTop={1}
-          >
-            <Box
-              component={"a"}
-              href={"https://apps.microsoft.com/detail/9P3GH5RNNZFD?referrer=appbadge&mode=direct"}
-              target={"_blank"}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                textDecoration: "none",
-              }}
-            >
-              <Box
-                component={"img"}
-                src={`https://get.microsoft.com/images/${i18n.language.toLowerCase()}%20dark.svg`}
-                alt="Get it from Microsoft Store"
-                sx={{
-                  width: 200,
-                  borderRadius: 1,
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Grid>
-      <Grid
-        item
-        container
-        alignItems={"center"}
-        justifyContent={"center"}
-        xs={12}
-        md={6}
-        data-aos="fade-up"
-        data-aos-delay="100"
-      >
-        <Box
+      <Grid item xs={12} md={6}>
+        <Typography
+          variant="h4"
           sx={{
-            position: "relative",
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "flex-end",
-            minHeight: { xs: 300, md: 400 },
+            fontWeight: 700,
+            mb: 2,
           }}
+          color="text.primary"
         >
-          {/* Windows Explorer Screenshot - Main larger image */}
-          <Box
-            sx={{
-              position: "relative",
-              zIndex: 1,
-              border: `1px solid ${theme.palette.divider}`,
-              backgroundColor: theme.palette.background.paper,
-              borderRadius: "8px",
-              boxShadow: theme.shadows[10],
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Box
-              component={"img"}
-              src={"https://cloudreve.org/imgs/desktop/explorer.png"}
-              alt="Windows Explorer Integration"
-              sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: theme.palette.mode === "dark" ? "brightness(0.8)" : "none",
-              }}
-            />
-          </Box>
-          {/* Sync UI Screenshot - Smaller overlay image */}
-          <Box
-            sx={{
-              position: "absolute",
-              border: `1px solid ${theme.palette.divider}`,
-              right: { xs: 0, md: -23 },
-              bottom: { xs: -20, md: -40 },
-              width: { xs: "40%", md: "40%" },
-              zIndex: 2,
-              backgroundColor: theme.palette.background.paper,
-              borderRadius: 1,
-              boxShadow: theme.shadows[15],
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Box
-              component={"img"}
-              src={"https://cloudreve.org/imgs/desktop/sync-ui.png"}
-              alt="Sync UI"
-              sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: theme.palette.mode === "dark" ? "brightness(0.8)" : "none",
-              }}
-            />
-          </Box>
-        </Box>
+          {t("setting.desktopAppTitleLead")}
+          <Typography color={"primary"} component={"span"} variant={"inherit"}>
+            {title}
+          </Typography>
+          {t("setting.desktopAppTitleTrail")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, maxWidth: 520 }}>
+          {t("setting.desktopAppDescription")}
+        </Typography>
+        <Stack spacing={2.5} sx={{ maxWidth: 520 }}>
+          <Step index={1}>{t("setting.desktopStep1")}</Step>
+          <Step index={2}>{t("setting.desktopStep2")}</Step>
+          <Step index={3}>{t("setting.desktopStep3")}</Step>
+        </Stack>
+        <AppLinks />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <WindowMockup />
       </Grid>
     </Grid>
   );

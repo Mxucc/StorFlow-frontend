@@ -71,7 +71,7 @@ const SelectProvider = ({ open, onClose, onSelect }: SelectProviderProps) => {
         <SecondaryButton
           startIcon={<Open />}
           variant="contained"
-          onClick={() => window.open("https://docs.cloudreve.org/usage/storage/", "_blank")}
+          onClick={() => window.open("https://github.com/Mxucc/StorFlow", "_blank")}
         >
           {t("policy.compare")}
         </SecondaryButton>

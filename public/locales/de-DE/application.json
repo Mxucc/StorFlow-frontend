@@ -63,7 +63,7 @@
     "appRequestsAccess": "{{appName}} fordert Zugriff auf Ihr Konto an",
     "consentDescription": "Sie autorisieren <0>{{appName}}</0>, auf Informationen unter dem Konto <1>{{userEmail}}</1> zuzugreifen:",
     "deny": "Abbrechen",
-    "desktop": "Cloudreve Desktop-Client",
+    "desktop": "StorFlow Desktop-Client",
     "scope": {
       "readonly": "Nur lesen",
       "readwrite": "Lesen & Schreiben",

@@ -13,6 +13,7 @@ import { ViewTaskAction } from "../../Common/Snackbar/snackbar.tsx";
 import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
 import Archive from "../../Icons/Archive.tsx";
 import { FileManagerIndex } from "../FileManager.tsx";
+import TaskNodeSelector from "./TaskNodeSelector.tsx";
 
 const CreateArchive = () => {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ const CreateArchive = () => {
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("archive.zip");
   const [path, setPath] = useState("");
+  const [nodeID, setNodeID] = useState<string | undefined>(undefined);
 
   const open = useAppSelector((state) => state.globalState.createArchiveDialogOpen);
   const targets = useAppSelector((state) => state.globalState.createArchiveDialogFiles);
@@ -50,6 +52,7 @@ const CreateArchive = () => {
       sendCreateArchive({
         src: targets?.map((t) => getFileLinkedUri(t)),
         dst: dst.join(fileName).toString(),
+        node_id: nodeID,
       }),
     )
       .then(() => {
@@ -63,7 +66,7 @@ const CreateArchive = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [targets, fileName, path]);
+  }, [targets, fileName, path, nodeID]);
 
   return (
     <DraggableDialog
@@ -94,6 +97,7 @@ const CreateArchive = () => {
           <Stack spacing={3} direction={isMobile ? "column" : "row"}>
             <PathSelectorForm onChange={setPath} path={path} label={t("modals.saveToTitle")} />
           </Stack>
+          <TaskNodeSelector value={nodeID} onChange={setNodeID} />
         </Stack>
       </DialogContent>
     </DraggableDialog>

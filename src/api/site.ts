@@ -44,6 +44,11 @@ export interface SiteConfig {
   max_batch_size?: number;
   app_promotion?: boolean;
   desktop_app_promotion?: boolean;
+  // announcement 站点公告：站点级公告文案，非空时前台会展示公告横幅。
+  announcement?: string;
+  // app_feedback / app_forum 客户端设置页展示的反馈与论坛链接，留空则不展示。
+  app_feedback?: string;
+  app_forum?: string;
   thumbnail_width?: number;
   thumbnail_height?: number;
   custom_props?: CustomProps[];

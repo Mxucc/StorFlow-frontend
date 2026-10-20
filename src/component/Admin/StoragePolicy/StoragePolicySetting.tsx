@@ -30,6 +30,8 @@ import RemoteWizard from "./Wizards/Remote/RemoteWizard";
 import S3Wizard from "./Wizards/S3/S3Wizard";
 import KS3Wizard from "./Wizards/KS3/KS3Wizard";
 import UpyunWizard from "./Wizards/Upyun/UpyunWizard";
+import Yun139Wizard from "./Wizards/Yun139/Yun139Wizard";
+import LoadBalanceWizard from "./Wizards/LoadBalance/LoadBalanceWizard";
 
 export const PageQuery = "page";
 export const PageSizeQuery = "page_size";
@@ -78,7 +80,7 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
     name: "policy.load_balance",
     img: "/static/img/lb.svg",
     wizardSize: "sm",
-    pro: true,
+    wizard: LoadBalanceWizard,
   },
   [PolicyType.remote]: {
     name: "policy.remote",
@@ -310,6 +312,15 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
     nativeExtractorDesDoc: "https://help.upyun.com/knowledge-base/image/#e58583e695b0e68daee88eb7e58f96",
     nativeExtractorDoc: "https://help.upyun.com/knowledge-base/image/",
   },
+  [PolicyType.yun139]: {
+    name: "policy.yun139",
+    img: "/static/img/yun139.svg",
+    wizardSize: "sm",
+    wizard: Yun139Wizard,
+    chunkSizeMin: 1024 * 1024, //1 MB
+    chunkSizeMax: 1024 * 1024 * 1024, //1GB
+    chunkSizeDes: "policy.chunkSizeDesQiniuCos",
+  },
   [PolicyType.onedrive]: {
     name: "policy.onedrive",
     img: "/static/img/onedrive.png",
@@ -471,7 +482,9 @@ const StoragePolicySetting = () => {
             policies.map((p) => <StoragePolicyCard key={`loading-${p.id}`} loading={true} />)}
           {loading &&
             policies.length === 0 &&
-            Array.from(Array(5)).map((_, index) => <StoragePolicyCard key={`loading-placeholder-${index}`} loading={true} />)}
+            Array.from(Array(5)).map((_, index) => (
+              <StoragePolicyCard key={`loading-placeholder-${index}`} loading={true} />
+            ))}
         </Grid>
         {count > 0 && (
           <Box sx={{ mt: 1 }}>

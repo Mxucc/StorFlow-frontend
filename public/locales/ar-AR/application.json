@@ -63,7 +63,7 @@
     "appRequestsAccess": "{{appName}} يطلب إمكانية الوصول إلى حسابك",
     "consentDescription": "أنت تقوم بتفويض <0>{{appName}}</0> بالوصول إلى المعلومات الموجودة في الحساب <1>{{userEmail}}</1>:",
     "deny": "إلغاء",
-    "desktop": "تطبيق سطح المكتب لـ Cloudreve",
+    "desktop": "تطبيق سطح المكتب لـ StorFlow",
     "scope": {
       "readonly": "للقراءة فقط",
       "readwrite": "للقراءة والكتابة",

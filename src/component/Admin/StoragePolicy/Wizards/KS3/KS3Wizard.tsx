@@ -171,7 +171,7 @@ const KS3Wizard = ({ onSubmit }: AddWizardProps) => {
           </FormControl>
           <Collapse in={!corsAdded} sx={{ mt: 1 }}>
             <Button loading={loading} variant="contained" color="primary" sx={{ mr: 1 }} onClick={hamdleCreateCors}>
-              {t("policy.letCloudreveHelpMe")}
+              {t("policy.letStorflowHelpMe")}
             </Button>
             <SecondaryButton variant="contained" onClick={() => setCorsAdded(true)}>
               {t("policy.addedManually")}

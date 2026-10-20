@@ -42,7 +42,6 @@ const StyledButton = styled(Button)(({ theme }) => ({
   transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1) !important",
 }));
 
-// TODO: fetch from cloudreve.org
 const currentPromotion = {
   code: "LX8YL9QP0",
   discount: 15,
@@ -54,7 +53,7 @@ const ProDialog = ({ open, onClose }: ProDialogProps) => {
   const { t } = useTranslation("dashboard");
   const openMore = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    window.open("https://cloudreve.org/pro", "_blank");
+    window.open("https://github.com/Mxucc/StorFlow", "_blank");
   }, []);
   const showPromotion = useMemo(() => {
     const now = dayjs();

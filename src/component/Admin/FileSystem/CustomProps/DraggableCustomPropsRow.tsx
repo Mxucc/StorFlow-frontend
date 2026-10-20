@@ -5,6 +5,7 @@ import { useDrag, useDrop } from "react-dnd";
 import { CustomProps, CustomPropsType } from "../../../../api/explorer";
 import { NoWrapCell } from "../../../Common/StyledComponents";
 import { getPropsContent } from "../../../FileManager/Sidebar/CustomProps/CustomPropsItem";
+import { translatePropName } from "../../../FileManager/Sidebar/CustomProps/translatePropName";
 import ArrowDown from "../../../Icons/ArrowDown";
 import CheckboxChecked from "../../../Icons/CheckboxChecked";
 import DataBarVerticalStar from "../../../Icons/DataBarVerticalStar";
@@ -45,7 +46,6 @@ export interface FieldTypeProps {
   maxDes?: string;
   maxRequired?: boolean;
   showOptions?: boolean;
-  pro?: boolean;
 }
 
 export const FieldTypes: Record<CustomPropsType, FieldTypeProps> = {
@@ -82,7 +82,6 @@ export const FieldTypes: Record<CustomPropsType, FieldTypeProps> = {
   [CustomPropsType.user]: {
     title: "customProps.user",
     icon: PersonOutlined,
-    pro: true,
   },
   [CustomPropsType.link]: {
     title: "customProps.link",
@@ -152,7 +151,7 @@ const DraggableCustomPropsRow = React.memo(
               {customProps.icon && (
                 <Icon icon={customProps.icon} width={20} height={20} color={theme.palette.action.active} />
               )}
-              {t(customProps.name, { ns: "application" })}
+              {translatePropName(customProps.name)}
             </Box>
           </NoWrapCell>
           <NoWrapCell>

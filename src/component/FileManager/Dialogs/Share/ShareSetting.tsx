@@ -20,12 +20,15 @@ import MuiAccordionSummary from "@mui/material/AccordionSummary";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { FileResponse, FileType } from "../../../../api/explorer.ts";
+import { formatMoney, parseMoney } from "../../../../api/shop.ts";
 import { Code } from "../../../Common/Code.tsx";
 import { FilledTextField, SmallFormControlLabel } from "../../../Common/StyledComponents.tsx";
 import BookInformation from "../../../Icons/BookInformation.tsx";
 import ClockArrowDownload from "../../../Icons/ClockArrowDownload.tsx";
 import Eye from "../../../Icons/Eye.tsx";
 import TableSettingsOutlined from "../../../Icons/TableSettings.tsx";
+import CoinStack from "../../../Icons/CoinStack.tsx";
+import Globe from "../../../Icons/Globe.tsx";
 import Timer from "../../../Icons/Timer.tsx";
 
 const Accordion = styled(MuiAccordion)(() => ({
@@ -81,6 +84,11 @@ export interface ShareSetting {
   show_readme?: boolean;
   downloads?: boolean;
   expires?: boolean;
+  /** 收费分享（网盘小店）：pay_enabled 打开后内容被门禁，price 单位为「分」 */
+  pay_enabled?: boolean;
+  price?: number;
+  /** 发布到站点默认分享列表 */
+  is_default?: boolean;
 
   downloads_val: valueOption;
   expires_val: valueOption;
@@ -132,13 +140,15 @@ const ShareSettingContent = ({ setting, file, editing, onSettingChange }: ShareS
     setExpanded(isExpanded ? panel : undefined);
   };
 
-  const handleCheck = (prop: "is_private" | "share_view" | "show_readme" | "expires" | "downloads") => () => {
-    if (!setting[prop]) {
-      handleExpand(prop)(null, true);
-    }
+  const handleCheck =
+    (prop: "is_private" | "share_view" | "show_readme" | "expires" | "downloads" | "pay_enabled" | "is_default") =>
+    () => {
+      if (!setting[prop]) {
+        handleExpand(prop)(null, true);
+      }
 
-    onSettingChange({ ...setting, [prop]: !setting[prop] });
-  };
+      onSettingChange({ ...setting, [prop]: !setting[prop] });
+    };
 
   return (
     <List
@@ -375,6 +385,49 @@ const ShareSettingContent = ({ setting, file, editing, onSettingChange }: ShareS
           </AccordionDetails>
         </Accordion>
       )}
+      <Accordion expanded={expanded === "pay_enabled"} onChange={handleExpand("pay_enabled")}>
+        <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
+          <StyledListItemButton>
+            <ListItemIcon>
+              <CoinStack />
+            </ListItemIcon>
+            <ListItemText primary={t("application:modals.payEnabled")} />
+            <ListItemSecondaryAction>
+              <Checkbox checked={setting.pay_enabled} onChange={handleCheck("pay_enabled")} />
+            </ListItemSecondaryAction>
+          </StyledListItemButton>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography sx={{ mb: 1 }}>{t("application:modals.payEnabledDes")}</Typography>
+          <FilledTextField
+            variant={"filled"}
+            size={"small"}
+            label={t("application:modals.payPrice")}
+            value={formatMoney(setting.price)}
+            onChange={(e) => {
+              const cents = parseMoney(e.target.value);
+              onSettingChange({ ...setting, price: Number.isNaN(cents) ? 0 : cents });
+            }}
+            inputProps={{ inputMode: "decimal", maxLength: 12 }}
+            error={!!setting.pay_enabled && (!setting.price || setting.price < 1)}
+            helperText={t("application:modals.payPriceHint")}
+          />
+        </AccordionDetails>
+      </Accordion>
+      <Accordion expanded={expanded === "is_default"} onChange={handleExpand("is_default")}>
+        <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
+          <StyledListItemButton>
+            <ListItemIcon>
+              <Globe />
+            </ListItemIcon>
+            <ListItemText primary={t("application:modals.isDefaultShare")} />
+            <ListItemSecondaryAction>
+              <Checkbox checked={setting.is_default} onChange={handleCheck("is_default")} />
+            </ListItemSecondaryAction>
+          </StyledListItemButton>
+        </AccordionSummary>
+        <AccordionDetails>{t("application:modals.isDefaultShareDes")}</AccordionDetails>
+      </Accordion>
     </List>
   );
 };

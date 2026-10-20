@@ -27,6 +27,8 @@ interface PathSelectionVariant {
   title: string;
   disableSharedWithMe?: boolean;
   disableTrash?: boolean;
+  /** 只允许选中文件（不能选中文件夹），用于「挑一个文件」的场景。 */
+  fileOnly?: boolean;
 }
 
 export const PathSelectionVariants: Record<string, PathSelectionVariant> = {
@@ -81,6 +83,13 @@ export const PathSelectionVariants: Record<string, PathSelectionVariant> = {
     title: "application:setting.rootFolder",
     disableSharedWithMe: true,
     disableTrash: true,
+  },
+  pickFile: {
+    indicator: "application:modals.pickFileIndicator",
+    title: "application:modals.pickFile",
+    disableSharedWithMe: true,
+    disableTrash: true,
+    fileOnly: true,
   },
 };
 
@@ -159,8 +168,12 @@ const PathSelection = () => {
       }
     }
 
+    if (variantProps.fileOnly && selectedFile?.type !== FileType.file) {
+      return true;
+    }
+
     return !selectedPath;
-  }, [selectedPath, variantProps]);
+  }, [selectedPath, variantProps, selectedFile]);
 
   return (
     <DraggableDialog

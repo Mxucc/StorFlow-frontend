@@ -14,7 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getShareInfo } from "../../../api/api.ts";
 import { Share } from "../../../api/explorer.ts";
@@ -68,6 +68,23 @@ const PaidShareDialog = ({ open, shareId, password, onClose, onPurchased }: Paid
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [order, setOrder] = useState<ShopOrder | undefined>();
   const [polling, setPolling] = useState(false);
+
+  /**
+   * 收银台只列出平台当前真正开通的通道：管理员关掉（或没配齐）的通道不该
+   * 出现在买家眼前。后端没下发时退回易支付协议支持的全部通道。
+   */
+  const channelOptions = useMemo<ShopPayChannel[]>(() => {
+    const list = (info?.pay_channels ?? []).filter((item): item is ShopPayChannel =>
+      (ShopPayChannels as readonly string[]).includes(item),
+    );
+    return list.length > 0 ? list : [...ShopPayChannels];
+  }, [info?.pay_channels]);
+
+  useEffect(() => {
+    if (!channelOptions.includes(channel)) {
+      setChannel(channelOptions[0]);
+    }
+  }, [channelOptions, channel]);
 
   useEffect(() => {
     if (!open || !shareId) {
@@ -259,7 +276,7 @@ const PaidShareDialog = ({ open, shareId, password, onClose, onPurchased }: Paid
                   onChange={(e) => setChannel(e.target.value as ShopPayChannel)}
                   aria-label={t("shop.checkout.channel")}
                 >
-                  {ShopPayChannels.map((item) => (
+                  {channelOptions.map((item) => (
                     <FormControlLabel
                       key={item}
                       value={item}

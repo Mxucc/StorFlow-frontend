@@ -304,6 +304,24 @@ const ShopProductDetail = () => {
   const [rateLimited, setRateLimited] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [channel, setChannel] = useState<ShopPayChannel>("alipay");
+
+  /**
+   * 可选的支付通道来自后端：只包含这家店当前真正能收钱的通道
+   * （每个通道可能指向不同的易支付服务商，没开通的通道不能出现在收银台）。
+   */
+  const payChannels = useMemo<ShopPayChannel[]>(() => {
+    const list = (product?.pay_channels ?? []).filter((item): item is ShopPayChannel =>
+      (ShopPayChannels as readonly string[]).includes(item),
+    );
+    return list.length > 0 ? list : [...ShopPayChannels];
+  }, [product?.pay_channels]);
+
+  // 店铺后改了通道配置时，把选中项拉回到第一个可用通道。
+  useEffect(() => {
+    if (payChannels.length > 0 && !payChannels.includes(channel)) {
+      setChannel(payChannels[0]);
+    }
+  }, [payChannels, channel]);
   const [coupon, setCoupon] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | undefined>();
@@ -622,21 +640,26 @@ const ShopProductDetail = () => {
             <Typography component={"legend"} variant={"body2"} color={"text.secondary"} sx={{ mb: 0.5 }}>
               {t("shop.checkout.channel")}
             </Typography>
-            <RadioGroup
-              row
-              value={channel}
-              onChange={(e) => setChannel(e.target.value as ShopPayChannel)}
-              aria-label={t("shop.checkout.channel")}
-            >
-              {ShopPayChannels.map((item) => (
-                <FormControlLabel
-                  key={item}
-                  value={item}
-                  control={<Radio size={"small"} />}
-                  label={<Typography variant={"body2"}>{t(`shop.channel.${item}`)}</Typography>}
-                />
-              ))}
-            </RadioGroup>
+            {payChannels.length > 1 ? (
+              <RadioGroup
+                row
+                value={channel}
+                onChange={(e) => setChannel(e.target.value as ShopPayChannel)}
+                aria-label={t("shop.checkout.channel")}
+              >
+                {payChannels.map((item) => (
+                  <FormControlLabel
+                    key={item}
+                    value={item}
+                    control={<Radio size={"small"} />}
+                    label={<Typography variant={"body2"}>{t(`shop.channel.${item}`)}</Typography>}
+                  />
+                ))}
+              </RadioGroup>
+            ) : (
+              // 只开通一个通道时不用选，直接显示它。
+              <Typography variant={"body2"}>{t(`shop.channel.${payChannels[0]}`)}</Typography>
+            )}
           </FormControl>
           <DenseFilledTextField
             fullWidth

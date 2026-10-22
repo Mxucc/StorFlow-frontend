@@ -96,6 +96,8 @@ export interface Share {
   currency?: string;
   purchased?: boolean;
   is_default?: boolean;
+  /** 付费分享可选的支付通道（后端按平台当前开通的通道下发，空则全部可用）。 */
+  pay_channels?: string[];
   permission?: string;
 }
 

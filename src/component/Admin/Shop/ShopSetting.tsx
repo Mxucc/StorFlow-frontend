@@ -10,6 +10,7 @@ import {
   DialogTitle,
   FormControlLabel,
   Stack,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -19,7 +20,7 @@ import {
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useQueryState } from "nuqs";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppError } from "../../../api/request.ts";
 import {
@@ -46,6 +47,15 @@ import {
   WithdrawStatusChip,
 } from "../../Pages/Shop/ShopShared.tsx";
 import ShopRefundsPanel from "../../Pages/Shop/Manage/ShopRefundsTab.tsx";
+
+/** 管理端的一行逐通道配置。 */
+interface AdminChannelRow {
+  channel: string;
+  api_url?: string;
+  pid?: string;
+  key?: string;
+  enabled: boolean;
+}
 
 const SettingKey = {
   enabled: "enabled",
@@ -117,11 +127,47 @@ const ShopSetting = () => {
     setSaved(false);
   };
 
-  const channelList = (values?.[SettingKey.channels] ?? "").split(",").filter(Boolean);
+  /**
+   * 逐通道配置。存的是 JSON 数组；空值表示「所有通道共用上面的共享凭据」，
+   * 此时三条通道都按启用展示，与后端实际行为一致。
+   */
+  const channelRows = useMemo<AdminChannelRow[]>(() => {
+    const raw = (values?.[SettingKey.channels] ?? "").trim();
+    let parsed: AdminChannelRow[] = [];
+    if (raw.startsWith("[")) {
+      try {
+        parsed = JSON.parse(raw) as AdminChannelRow[];
+      } catch {
+        parsed = [];
+      }
+    }
+    const byChannel = new Map(parsed.map((item) => [item.channel, item]));
+    return ShopPayChannels.map((channel) => {
+      const row = byChannel.get(channel);
+      return {
+        channel,
+        api_url: row?.api_url ?? "",
+        pid: row?.pid ?? "",
+        key: row?.key ?? "",
+        enabled: row ? Boolean(row.enabled) : raw === "",
+      };
+    });
+  }, [values?.[SettingKey.channels]]);
 
-  const toggleChannel = (channel: string, enabled: boolean) => {
-    const next = enabled ? [...channelList, channel] : channelList.filter((item) => item !== channel);
-    patch(SettingKey.channels, Array.from(new Set(next)).join(","));
+  const patchChannel = (channel: string, next: Partial<AdminChannelRow>) => {
+    const rows = channelRows.map((row) => (row.channel === channel ? { ...row, ...next } : row));
+    patch(
+      SettingKey.channels,
+      JSON.stringify(
+        rows.map((row) => ({
+          channel: row.channel,
+          api_url: row.api_url ?? "",
+          pid: row.pid,
+          key: row.key,
+          enabled: row.enabled,
+        })),
+      ),
+    );
   };
 
   const save = () => {
@@ -295,19 +341,59 @@ const ShopSetting = () => {
                   <Typography variant={"body2"} color={"text.secondary"} sx={{ mb: 0.5 }}>
                     {t("dashboard:shop.fields.channels")}
                   </Typography>
-                  <Stack direction={"row"} spacing={2} sx={{ flexWrap: "wrap" }}>
-                    {ShopPayChannels.map((channel) => (
-                      <FormControlLabel
-                        key={channel}
-                        control={
-                          <Checkbox
-                            size={"small"}
-                            checked={channelList.includes(channel)}
-                            onChange={(e) => toggleChannel(channel, e.target.checked)}
-                          />
-                        }
-                        label={<Typography variant={"body2"}>{t(`shop.channel.${channel}`)}</Typography>}
-                      />
+                  <Typography variant={"caption"} color={"text.secondary"}>
+                    {t("dashboard:shop.fields.channelsHint")}
+                  </Typography>
+                  <Stack spacing={1.5} sx={{ mt: 1 }}>
+                    {channelRows.map((row) => (
+                      <Box
+                        key={row.channel}
+                        sx={{
+                          border: "1px solid",
+                          borderColor: row.enabled ? "primary.main" : "divider",
+                          borderRadius: 2,
+                          p: 1.5,
+                          display: "grid",
+                          gridTemplateColumns: { xs: "1fr", md: "auto 1.2fr 0.7fr 1fr" },
+                          gap: 1.5,
+                          alignItems: "center",
+                        }}
+                      >
+                        <FormControlLabel
+                          sx={{ m: 0 }}
+                          control={
+                            <Switch
+                              size={"small"}
+                              checked={row.enabled}
+                              onChange={(e) => patchChannel(row.channel, { enabled: e.target.checked })}
+                            />
+                          }
+                          label={<Typography variant={"body2"}>{t(`shop.channel.${row.channel}`)}</Typography>}
+                        />
+                        <DenseFilledTextField
+                          label={t("dashboard:shop.fields.channelApiUrl")}
+                          value={row.api_url ?? ""}
+                          onChange={(e) => patchChannel(row.channel, { api_url: e.target.value })}
+                          placeholder={values[SettingKey.apiUrl] || "https://pay.example.com"}
+                          inputProps={{ maxLength: 1024 }}
+                        />
+                        <DenseFilledTextField
+                          label={t("dashboard:shop.fields.channelPid")}
+                          value={row.pid}
+                          onChange={(e) => patchChannel(row.channel, { pid: e.target.value })}
+                          placeholder={values[SettingKey.pid] ?? ""}
+                          inputProps={{ maxLength: 64 }}
+                        />
+                        <DenseFilledTextField
+                          label={t("dashboard:shop.fields.channelKey")}
+                          type={"password"}
+                          value={row.key}
+                          onChange={(e) => patchChannel(row.channel, { key: e.target.value })}
+                          placeholder={t("dashboard:shop.fields.channelInherit")}
+                          inputProps={{ maxLength: 128 }}
+                          autoComplete={"new-password"}
+                        />
+                      </Box>
                     ))}
                   </Stack>
                 </Box>

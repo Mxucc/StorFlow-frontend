@@ -66,10 +66,39 @@ export interface ShopPaymentSetting {
   /** 平台聚合支付是否已由管理员配置。 */
   platform_ready: boolean;
   channels: string[];
+  /** 逐通道的网关配置（每个通道可指向不同的易支付服务商）。 */
+  channel_configs: ShopChannelConfig[];
   deposit_amount: number;
   deposit_paid: number;
   deposit_due: number;
   settle_delay_hours: number;
+}
+
+/**
+ * 逐通道的易支付配置。
+ *
+ * 易支付服务商通常按通道提供不同的收银台地址与商户号，有的通道干脆没开，
+ * 所以每个通道单独保存一套凭据；留空的字段沿用店铺的共享凭据
+ * （`epay_api_url` / `epay_pid` / `epay_key`）。
+ */
+export interface ShopChannelConfig {
+  channel: ShopPayChannel;
+  api_url?: string;
+  pid?: string;
+  /** 是否已保存该通道的密钥（密钥本身不会下发）。 */
+  key_set?: boolean;
+  enabled: boolean;
+  /** 是否已启用且配置齐全，即买家真的能用它付款。 */
+  ready?: boolean;
+}
+
+/** 提交逐通道配置时的请求体；key 传 `********` 表示沿用已保存的密钥。 */
+export interface ShopChannelConfigRequest {
+  channel: ShopPayChannel;
+  api_url?: string;
+  pid?: string;
+  key?: string;
+  enabled: boolean;
 }
 
 export const ShopLayoutSections = ["banner", "products", "about", "notice", "links", "contact"] as const;
@@ -137,6 +166,8 @@ export interface ShopProductDetail extends ShopProductSummary {
   /** 介绍里嵌的素材可见范围，用于给访客提示。 */
   description_visibility: ShopDescriptionVisibility;
   can_preview: boolean;
+  /** 收银台可选的支付通道（由后端按店铺配置算好）。 */
+  pay_channels?: string[];
 }
 
 /** 从网盘文件签发出来的素材引用，直接写进 Markdown。 */
@@ -175,6 +206,8 @@ export interface Shop {
   theme: ShopTheme;
   status: string;
   referrer_rate: number;
+  /** 收银台可选的支付通道（后端按店铺配置算好，只含真正能用的）。 */
+  pay_channels?: string[];
   created_at: number;
   updated_at: number;
 }
@@ -452,6 +485,11 @@ export interface ShopPaymentSettingService {
   epay_pid?: string;
   /** 留空表示清除已保存的密钥，`********` 表示保持不变。 */
   epay_key?: string;
+  /**
+   * 逐通道配置。不传表示不改动已保存的通道表；传空数组表示所有通道共用
+   * 上面的共享凭据。
+   */
+  epay_channels?: ShopChannelConfigRequest[];
 }
 
 export interface ShopAdminWithdrawReviewService {

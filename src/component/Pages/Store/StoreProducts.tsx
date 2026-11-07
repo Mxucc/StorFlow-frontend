@@ -44,12 +44,15 @@ interface StoreProductsProps {
   skus: VASShopSKU[];
   providers: VASShopProvider[];
   points: number;
+  /** 钱包余额（分），用于「余额支付」选项。 */
+  wallet: number;
   onPurchased: () => void;
 }
 
 interface PayOption {
   key: string;
   usePoints: boolean;
+  useBalance?: boolean;
   providerId?: string;
   channel: string;
   label: string;
@@ -126,7 +129,7 @@ const GroupBenefits = ({
   );
 };
 
-const StoreProducts = ({ skus, providers, points, onPurchased }: StoreProductsProps) => {
+const StoreProducts = ({ skus, providers, points, wallet, onPurchased }: StoreProductsProps) => {
   const { t } = useTranslation();
   const [target, setTarget] = useState<VASShopSKU | undefined>();
 
@@ -269,6 +272,7 @@ const StoreProducts = ({ skus, providers, points, onPurchased }: StoreProductsPr
           sku={target}
           providers={providers}
           points={points}
+          wallet={wallet}
           onClose={() => setTarget(undefined)}
           onPurchased={onPurchased}
         />
@@ -281,6 +285,7 @@ interface PurchaseDialogProps {
   sku: VASShopSKU;
   providers: VASShopProvider[];
   points: number;
+  wallet: number;
   onClose: () => void;
   onPurchased: () => void;
 }
@@ -288,7 +293,7 @@ interface PurchaseDialogProps {
 /**
  * 下单弹窗：现金支付跳转收银台并轮询订单状态，积分支付由后端立即履约。
  */
-const PurchaseDialog = ({ sku, providers, points, onClose, onPurchased }: PurchaseDialogProps) => {
+const PurchaseDialog = ({ sku, providers, points, wallet, onClose, onPurchased }: PurchaseDialogProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -316,8 +321,21 @@ const PurchaseDialog = ({ sku, providers, points, onClose, onPurchased }: Purcha
         disabled: points < (sku.points_price ?? 0),
       });
     }
+
+    // 余额支付：钱包里是平台已收的钱，后端扣款后立即履约，无需跳转收银台。
+    if (sku.price > 0) {
+      list.push({
+        key: "balance",
+        usePoints: false,
+        useBalance: true,
+        channel: "balance",
+        label: t("store.pay.balance"),
+        hint: t("store.pay.balanceHint", { balance: displayMoney(wallet) }),
+        disabled: wallet < sku.price,
+      });
+    }
     return list;
-  }, [points, providers, sku, t]);
+  }, [points, providers, sku, t, wallet]);
 
   const [selected, setSelected] = useState<string>(options.find((o) => !o.disabled)?.key ?? "");
   const [submitting, setSubmitting] = useState(false);
@@ -384,6 +402,7 @@ const PurchaseDialog = ({ sku, providers, points, onClose, onPurchased }: Purcha
         qyt: 1,
         provider_id: option.providerId,
         use_points: option.usePoints,
+        use_balance: option.useBalance,
       }),
     )
       .then((res) => {

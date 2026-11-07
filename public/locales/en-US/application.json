@@ -1123,7 +1123,11 @@
     "checkout": {
       "title": "Checkout",
       "amount": "Amount",
-      "channel": "Payment method",
+      "method": "Payment method",
+      "channel": "Payment channel",
+      "payOnline": "Pay online",
+      "payBalance": "Pay with balance ({{balance}} available)",
+      "balanceShort": "Insufficient balance: {{balance}}. Redeem a gift code first.",
       "coupon": "Coupon code",
       "couponPlaceholder": "e.g. DEMO10",
       "couponHint": "Optional. The final amount is calculated by the server.",
@@ -1700,6 +1704,8 @@
       "online": "Pay online · {{name}}",
       "points": "Pay with points ({{points}} points)",
       "pointsBalance": "Current balance: {{balance}}",
+      "balance": "Pay with wallet balance",
+      "balanceHint": "Current balance: {{balance}}. Redeem a gift code if it is not enough.",
       "noChannel": "No payment channel is available, please contact the administrator.",
       "confirm": "Pay",
       "success": "Purchase completed, your benefits are ready.",
@@ -1709,6 +1715,25 @@
       "amount": "Amount: {{amount}}",
       "checkStatus": "I have paid, refresh status",
       "failed": "Failed to create the order, please try again later."
+    },
+    "wallet": {
+      "balance": "Wallet balance",
+      "hint": "Top up with gift codes; the balance pays for cloud subscriptions and shop items.",
+      "history": "Balance history",
+      "noHistory": "No balance records yet",
+      "fields": {
+        "delta": "Change",
+        "balance": "Balance after",
+        "reason": "Type",
+        "note": "Note"
+      },
+      "reason": {
+        "recharge": "Gift code top-up",
+        "purchase": "Subscription purchase",
+        "shop_pay": "Shop purchase",
+        "refund": "Order refund",
+        "manual": "Adjusted by admin"
+      }
     },
     "points": {
       "fields": {
@@ -1731,7 +1756,8 @@
       "redeem": "Redeem",
       "success": "Redeemed",
       "failed": "Failed to redeem",
-      "reward": "Credited: {{type}} {{num}}"
+      "reward": "Credited: {{type}} {{num}}",
+      "balanceReward": "Topped up {{amount}}, current balance {{balance}}"
     },
     "order": {
       "fields": {

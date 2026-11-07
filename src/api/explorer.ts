@@ -98,6 +98,8 @@ export interface Share {
   is_default?: boolean;
   /** 付费分享可选的支付通道（后端按平台当前开通的通道下发，空则全部可用）。 */
   pay_channels?: string[];
+  /** 是否允许用钱包余额支付这笔分享（后端按店铺是否走平台通道判定）。 */
+  balance_payable?: boolean;
   permission?: string;
 }
 

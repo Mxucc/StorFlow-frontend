@@ -43,6 +43,24 @@ export interface VASPointsSummary {
   history?: VASPointsLedger[];
 }
 
+/** 钱包流水条目（`GET /vas/wallet`），delta 单位为「分」。 */
+export interface VASWalletEntry {
+  delta: number;
+  balance_after: number;
+  /** recharge | purchase | shop_pay | refund | manual */
+  reason: string;
+  note?: string;
+  ref?: string;
+  created_at: number;
+}
+
+/** 钱包（余额）：可用于购买网盘订阅与小店资源。 */
+export interface VASWallet {
+  balance: number;
+  currency: string;
+  history?: VASWalletEntry[];
+}
+
 /** 用户侧订单（`GET /user/payments`）。 */
 export interface VASPayment {
   id: number;
@@ -61,6 +79,12 @@ export interface VASPayment {
 }
 
 /** 下单参数：`sku_id` 与「积分充值」二选一；`use_points` 表示用积分支付。 */
+/**
+ * 下单参数：`sku_id` 与「积分充值」二选一。
+ *
+ * - `use_points`：用积分支付（后端立即履约）；
+ * - `use_balance`：用钱包余额支付（后端扣款后立即履约，无需支付渠道）。
+ */
 export interface CreateVASPaymentService {
   sku_id?: string;
   type?: "points";
@@ -68,6 +92,7 @@ export interface CreateVASPaymentService {
   qyt?: number;
   provider_id?: string;
   use_points?: boolean;
+  use_balance?: boolean;
   email?: string;
 }
 
@@ -81,10 +106,15 @@ export interface VASPaymentResponse {
 }
 
 /** 兑换码兑换结果。 */
+/** 兑换码兑换结果：余额卡密额外返回到账户金额与兑换后余额。 */
 export interface VASGiftCodeReward {
-  product_type: "points" | "storage" | "group";
+  product_type: "points" | "storage" | "group" | "balance";
   num: number;
   name?: string;
+  /** 余额卡密：本次入账金额（分）。 */
+  amount?: number;
+  /** 余额卡密：兑换后的钱包余额（分）。 */
+  balance?: number;
 }
 
 /** 会员商品对应的用户组权益摘要（用户侧只读）。 */
@@ -120,6 +150,13 @@ export function getVASShopProviders(): ThunkResponse<VASShopProvider[]> {
 export function getMyPoints(): ThunkResponse<VASPointsSummary> {
   return async (dispatch) => {
     return await dispatch(send("/vas/points", { method: "GET" }, defaultOpts));
+  };
+}
+
+/** 我的钱包余额与最近流水（`GET /vas/wallet`）。 */
+export function getWallet(): ThunkResponse<VASWallet> {
+  return async (dispatch) => {
+    return await dispatch(send("/vas/wallet", { method: "GET" }, defaultOpts));
   };
 }
 

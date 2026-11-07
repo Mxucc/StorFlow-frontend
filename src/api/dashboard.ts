@@ -697,6 +697,9 @@ export interface ListPaymentResponse {
 /** 增值服务商品类型：积分包 / 容量包 / 会员（用户组）。 */
 export type VASProductType = "points" | "storage" | "group";
 
+/** 兑换码类型：在商品类型之外还支持「余额」（卡密充值）。 */
+export type VASGiftCodeType = VASProductType | "balance";
+
 /** 支付渠道类型。 */
 export type VASProviderType = "epay" | "custom" | "stripe";
 
@@ -732,11 +735,13 @@ export interface SaveVASProvidersService {
   providers: VASProvider[];
 }
 
-/** 兑换码。 */
+/** 兑换码。`amount` 是余额卡密的面额（分），`expires_at` 为 0 表示永久有效。 */
 export interface GiftCode extends CommonMixin {
   code: string;
-  product_type: VASProductType;
+  product_type: VASGiftCodeType;
   num: number;
+  amount?: number;
+  expires_at?: number;
   name?: string;
   used: boolean;
   used_by?: number;
@@ -751,8 +756,12 @@ export interface ListGiftCodeResponse {
 
 export interface CreateGiftCodeService {
   count: number;
-  product_type: VASProductType;
+  product_type: VASGiftCodeType;
   num: number;
+  /** 余额卡密的面额（分）。 */
+  amount?: number;
+  /** 过期时间（Unix 秒），0 / 缺省表示永久有效。 */
+  expires_at?: number;
   name: string;
   prefix: string;
 }

@@ -19,7 +19,7 @@ import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createVASGiftCodes, deleteVASGiftCodes, getGroupList, getVASGiftCodes } from "../../../../api/api";
-import { GiftCode, GroupEnt, VASProductType } from "../../../../api/dashboard";
+import { GiftCode, GroupEnt, VASGiftCodeType } from "../../../../api/dashboard";
 import { useAppDispatch } from "../../../../redux/hooks";
 import { confirmOperation } from "../../../../redux/thunks/dialog";
 import { sizeToString } from "../../../../util";
@@ -39,7 +39,7 @@ import Delete from "../../../Icons/Delete";
 import SettingForm from "../../../Pages/Setting/SettingForm";
 import TablePagination from "../../Common/TablePagination";
 import { NoMarginHelperText } from "../Settings";
-import { productTypes, sizeUnits, typeLabel } from "./utils";
+import { giftCodeTypes, sizeUnits, typeLabel } from "./utils";
 
 const AnonymousGroupID = 3;
 
@@ -58,13 +58,16 @@ const GenerateGiftCodeDialog = ({ open, onClose, groups, onGenerated }: Generate
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState("1");
-  const [productType, setProductType] = useState<VASProductType>("points");
+  const [productType, setProductType] = useState<VASGiftCodeType>("balance");
   const [numValue, setNumValue] = useState("0");
   const [sizeUnit, setSizeUnit] = useState(1024 ** 3);
   const [name, setName] = useState("");
+  // 余额卡密的面额（元）与所有卡密的有效天数（0 = 永久有效）。
+  const [amountValue, setAmountValue] = useState("10");
+  const [validDays, setValidDays] = useState("0");
   const [prefix, setPrefix] = useState("");
 
-  const handleTypeChange = (next: VASProductType) => {
+  const handleTypeChange = (next: VASGiftCodeType) => {
     setProductType(next);
     if (next === "storage") {
       setNumValue("0");
@@ -78,16 +81,32 @@ const GenerateGiftCodeDialog = ({ open, onClose, groups, onGenerated }: Generate
 
   const handleSubmit = () => {
     const countNum = Math.round(parseFloat(count) || 0);
-    if (countNum < 1 || countNum > 100) {
+    if (countNum < 1 || countNum > 1000) {
       enqueueSnackbar(t("giftCodes.invalidCount"), { variant: "warning" });
       return;
     }
+
     const num =
       productType === "storage"
         ? Math.round((parseFloat(numValue) || 0) * sizeUnit)
         : Math.round(parseFloat(numValue) || 0);
-    if (num <= 0 || (productType === "group" && !groups.some((g) => g.id === num))) {
+
+    // 余额卡密用「面额」计价，其余卡密用 num（积分 / 容量 / 用户组）。
+    let amount = 0;
+    if (productType === "balance") {
+      amount = Math.round((parseFloat(amountValue) || 0) * 100);
+      if (amount <= 0) {
+        enqueueSnackbar(t("giftCodes.invalidAmount"), { variant: "warning" });
+        return;
+      }
+    } else if (num <= 0 || (productType === "group" && !groups.some((g) => g.id === num))) {
       enqueueSnackbar(t("vas.invalidNum"), { variant: "warning" });
+      return;
+    }
+
+    const days = Math.round(parseFloat(validDays) || 0);
+    if (days < 0) {
+      enqueueSnackbar(t("giftCodes.invalidValidDays"), { variant: "warning" });
       return;
     }
 
@@ -96,7 +115,10 @@ const GenerateGiftCodeDialog = ({ open, onClose, groups, onGenerated }: Generate
       createVASGiftCodes({
         count: countNum,
         product_type: productType,
-        num,
+        num: productType === "balance" ? 0 : num,
+        amount: productType === "balance" ? amount : 0,
+        // 0 天表示永久有效。
+        expires_at: days > 0 ? Math.floor(Date.now() / 1000) + days * 86400 : 0,
         name: name.trim(),
         prefix: prefix.trim(),
       }),
@@ -133,7 +155,7 @@ const GenerateGiftCodeDialog = ({ open, onClose, groups, onGenerated }: Generate
               fullWidth
               type="number"
               value={count}
-              slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
+              slotProps={{ htmlInput: { min: 1, max: 1000, step: 1 } }}
               onChange={(e) => setCount(e.target.value)}
             />
             <NoMarginHelperText>{t("giftCodes.giftCodeQuantityHelp")}</NoMarginHelperText>
@@ -141,8 +163,8 @@ const GenerateGiftCodeDialog = ({ open, onClose, groups, onGenerated }: Generate
 
           <SettingForm title={t("giftCodes.giftCodeProductType")} lgWidth={12}>
             <FormControl fullWidth>
-              <DenseSelect value={productType} onChange={(e) => handleTypeChange(e.target.value as VASProductType)}>
-                {productTypes.map((value) => (
+              <DenseSelect value={productType} onChange={(e) => handleTypeChange(e.target.value as VASGiftCodeType)}>
+                {giftCodeTypes.map((value) => (
                   <SquareMenuItem key={value} value={value}>
                     <ListItemText
                       primary={typeLabel(value, t)}
@@ -231,6 +253,30 @@ const GenerateGiftCodeDialog = ({ open, onClose, groups, onGenerated }: Generate
             </SettingForm>
           )}
 
+          {productType === "balance" && (
+            <SettingForm title={t("giftCodes.faceValue")} lgWidth={12}>
+              <DenseFilledTextField
+                fullWidth
+                type="number"
+                value={amountValue}
+                slotProps={{ htmlInput: { min: 0.01, step: 0.01 } }}
+                onChange={(e) => setAmountValue(e.target.value)}
+              />
+              <NoMarginHelperText>{t("giftCodes.faceValueDes")}</NoMarginHelperText>
+            </SettingForm>
+          )}
+
+          <SettingForm title={t("giftCodes.validDays")} lgWidth={12}>
+            <DenseFilledTextField
+              fullWidth
+              type="number"
+              value={validDays}
+              slotProps={{ htmlInput: { min: 0, step: 1 } }}
+              onChange={(e) => setValidDays(e.target.value)}
+            />
+            <NoMarginHelperText>{t("giftCodes.validDaysDes")}</NoMarginHelperText>
+          </SettingForm>
+
           <SettingForm title={t("vas.name")} lgWidth={12}>
             <DenseFilledTextField fullWidth value={name} onChange={(e) => setName(e.target.value)} />
             <NoMarginHelperText>{t("vas.giftCodeNameDes")}</NoMarginHelperText>
@@ -316,6 +362,8 @@ const GiftCodes = () => {
         return sizeToString(code.num);
       case "group":
         return groups.find((g) => g.id === code.num)?.name ?? `#${code.num}`;
+      case "balance":
+        return `¥${((code.amount ?? 0) / 100).toFixed(2)}`;
       default:
         return `${code.num} ${t("vas.credits")}`;
     }

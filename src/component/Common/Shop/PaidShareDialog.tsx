@@ -27,6 +27,7 @@ import {
   ShopPayChannel,
   ShopPayChannels,
 } from "../../../api/shop.ts";
+import { getWallet, VASWallet } from "../../../api/vas.ts";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import CheckmarkCircle from "../../Icons/CheckmarkCircle.tsx";
 import CoinStack from "../../Icons/CoinStack.tsx";
@@ -68,6 +69,24 @@ const PaidShareDialog = ({ open, shareId, password, onClose, onPurchased }: Paid
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [order, setOrder] = useState<ShopOrder | undefined>();
   const [polling, setPolling] = useState(false);
+
+  // 余额支付：钱包余额来自 /vas/wallet；后端只在店铺走平台通道时允许。
+  const [wallet, setWallet] = useState<VASWallet | undefined>();
+  const [payWith, setPayWith] = useState<"epay" | "balance">("epay");
+
+  const walletBalance = wallet?.balance ?? 0;
+  const price = info?.price ?? 0;
+  const balancePayable = !!info?.balance_payable && walletBalance >= price;
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setPayWith("epay");
+    dispatch(getWallet())
+      .then((res) => setWallet(res ?? undefined))
+      .catch(() => undefined);
+  }, [dispatch, open]);
 
   /**
    * 收银台只列出平台当前真正开通的通道：管理员关掉（或没配齐）的通道不该
@@ -149,7 +168,8 @@ const PaidShareDialog = ({ open, shareId, password, onClose, onPurchased }: Paid
       createShopOrder({
         kind: "share",
         object_id: shareId,
-        channel,
+        channel: payWith === "balance" ? undefined : channel,
+        pay_with: payWith === "balance" ? "balance" : undefined,
         share_password: sharePassword || undefined,
       }),
     )
@@ -268,23 +288,54 @@ const PaidShareDialog = ({ open, shareId, password, onClose, onPurchased }: Paid
             ) : (
               <>
                 <Typography variant={"body2"} color={"text.secondary"} sx={{ mb: 0.5 }}>
-                  {t("shop.checkout.channel")}
+                  {t("shop.checkout.method")}
                 </Typography>
                 <RadioGroup
                   row
-                  value={channel}
-                  onChange={(e) => setChannel(e.target.value as ShopPayChannel)}
-                  aria-label={t("shop.checkout.channel")}
+                  value={payWith}
+                  onChange={(e) => setPayWith(e.target.value as "epay" | "balance")}
+                  aria-label={t("shop.checkout.method")}
                 >
-                  {channelOptions.map((item) => (
+                  <FormControlLabel
+                    value={"epay"}
+                    control={<Radio size={"small"} />}
+                    label={<Typography variant={"body2"}>{t("shop.checkout.payOnline")}</Typography>}
+                  />
+                  {info.balance_payable && (
                     <FormControlLabel
-                      key={item}
-                      value={item}
+                      value={"balance"}
                       control={<Radio size={"small"} />}
-                      label={<Typography variant={"body2"}>{t(`shop.channel.${item}`)}</Typography>}
+                      label={
+                        <Typography variant={"body2"}>
+                          {t("shop.checkout.payBalance", { balance: displayMoney(walletBalance) })}
+                        </Typography>
+                      }
                     />
-                  ))}
+                  )}
                 </RadioGroup>
+                {payWith === "balance" && !balancePayable && (
+                  <Typography variant={"caption"} color={"warning.main"} sx={{ display: "block", mt: 0.5 }}>
+                    {t("shop.checkout.balanceShort", { balance: displayMoney(walletBalance) })}
+                  </Typography>
+                )}
+                {payWith === "epay" && channelOptions.length > 1 && (
+                  <RadioGroup
+                    row
+                    value={channel}
+                    onChange={(e) => setChannel(e.target.value as ShopPayChannel)}
+                    aria-label={t("shop.checkout.channel")}
+                    sx={{ mt: 0.5 }}
+                  >
+                    {channelOptions.map((item) => (
+                      <FormControlLabel
+                        key={item}
+                        value={item}
+                        control={<Radio size={"small"} />}
+                        label={<Typography variant={"body2"}>{t(`shop.channel.${item}`)}</Typography>}
+                      />
+                    ))}
+                  </RadioGroup>
+                )}
                 <DenseFilledTextField
                   fullWidth
                   label={t("shop.share.password")}
@@ -309,7 +360,11 @@ const PaidShareDialog = ({ open, shareId, password, onClose, onPurchased }: Paid
           {t("shop.checkout.cancel")}
         </Button>
         {!loading && info && info.pay_enabled && !info.purchased && !order && (
-          <Button variant={"contained"} onClick={purchase} disabled={submitting}>
+          <Button
+            variant={"contained"}
+            onClick={purchase}
+            disabled={submitting || (payWith === "balance" && !balancePayable)}
+          >
             {t("shop.share.purchase")}
           </Button>
         )}

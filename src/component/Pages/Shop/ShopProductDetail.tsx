@@ -29,6 +29,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AppError, Code } from "../../../api/request.ts";
 import {
   createShopOrder,
+  displayMoney,
   getProductPreview,
   getStorefrontProduct,
   isRateLimitedError,
@@ -37,6 +38,7 @@ import {
   ShopPreviewEntry,
   ShopProductDetail as ShopProductDetailModel,
 } from "../../../api/shop.ts";
+import { getWallet, VASWallet } from "../../../api/vas.ts";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import { renderMarkdown } from "../../../util/markdown.ts";
 import PageTitle from "../../../router/PageTitle.tsx";
@@ -326,6 +328,22 @@ const ShopProductDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | undefined>();
 
+  // 余额支付：钱包余额来自 /vas/wallet；只有走平台通道的店铺才允许余额支付。
+  const [wallet, setWallet] = useState<VASWallet | undefined>();
+  const [payWith, setPayWith] = useState<"epay" | "balance">("epay");
+
+  useEffect(() => {
+    if (!SessionManager.currentLoginOrNull()) {
+      return;
+    }
+    dispatch(getWallet())
+      .then((res) => setWallet(res ?? undefined))
+      .catch(() => undefined);
+  }, [dispatch]);
+
+  const walletBalance = wallet?.balance ?? 0;
+  const balancePayable = !!product?.balance_payable && walletBalance >= (product?.final_price ?? 0);
+
   const loggedIn = !!SessionManager.currentLoginOrNull();
   const redirectPath = useMemo(() => {
     const search = window.location.search;
@@ -380,9 +398,10 @@ const ShopProductDetail = () => {
       createShopOrder({
         kind: "product",
         object_id: product.id,
-        channel,
+        channel: payWith === "balance" ? undefined : channel,
         coupon: coupon.trim() || undefined,
         ref,
+        pay_with: payWith === "balance" ? "balance" : undefined,
       }),
     )
       .then((order) => {
@@ -638,29 +657,64 @@ const ShopProductDetail = () => {
           </Box>
           <FormControl component={"fieldset"} sx={{ width: "100%" }}>
             <Typography component={"legend"} variant={"body2"} color={"text.secondary"} sx={{ mb: 0.5 }}>
-              {t("shop.checkout.channel")}
+              {t("shop.checkout.method")}
             </Typography>
-            {payChannels.length > 1 ? (
-              <RadioGroup
-                row
-                value={channel}
-                onChange={(e) => setChannel(e.target.value as ShopPayChannel)}
-                aria-label={t("shop.checkout.channel")}
-              >
-                {payChannels.map((item) => (
-                  <FormControlLabel
-                    key={item}
-                    value={item}
-                    control={<Radio size={"small"} />}
-                    label={<Typography variant={"body2"}>{t(`shop.channel.${item}`)}</Typography>}
-                  />
-                ))}
-              </RadioGroup>
-            ) : (
-              // 只开通一个通道时不用选，直接显示它。
-              <Typography variant={"body2"}>{t(`shop.channel.${payChannels[0]}`)}</Typography>
+            <RadioGroup
+              row
+              value={payWith}
+              onChange={(e) => setPayWith(e.target.value as "epay" | "balance")}
+              aria-label={t("shop.checkout.method")}
+            >
+              <FormControlLabel
+                value={"epay"}
+                control={<Radio size={"small"} />}
+                label={<Typography variant={"body2"}>{t("shop.checkout.payOnline")}</Typography>}
+              />
+              {product.balance_payable && (
+                <FormControlLabel
+                  value={"balance"}
+                  control={<Radio size={"small"} />}
+                  label={
+                    <Typography variant={"body2"}>
+                      {t("shop.checkout.payBalance", { balance: displayMoney(walletBalance) })}
+                    </Typography>
+                  }
+                />
+              )}
+            </RadioGroup>
+            {payWith === "balance" && !balancePayable && (
+              <Typography variant={"caption"} color={"warning.main"} sx={{ display: "block", mt: 0.5 }}>
+                {t("shop.checkout.balanceShort", { balance: displayMoney(walletBalance) })}
+              </Typography>
             )}
           </FormControl>
+          {payWith === "epay" && (
+            <FormControl component={"fieldset"} sx={{ width: "100%", mt: 1.5 }}>
+              <Typography component={"legend"} variant={"body2"} color={"text.secondary"} sx={{ mb: 0.5 }}>
+                {t("shop.checkout.channel")}
+              </Typography>
+              {payChannels.length > 1 ? (
+                <RadioGroup
+                  row
+                  value={channel}
+                  onChange={(e) => setChannel(e.target.value as ShopPayChannel)}
+                  aria-label={t("shop.checkout.channel")}
+                >
+                  {payChannels.map((item) => (
+                    <FormControlLabel
+                      key={item}
+                      value={item}
+                      control={<Radio size={"small"} />}
+                      label={<Typography variant={"body2"}>{t(`shop.channel.${item}`)}</Typography>}
+                    />
+                  ))}
+                </RadioGroup>
+              ) : (
+                // 只开通一个通道时不用选，直接显示它。
+                <Typography variant={"body2"}>{t(`shop.channel.${payChannels[0]}`)}</Typography>
+              )}
+            </FormControl>
+          )}
           <DenseFilledTextField
             fullWidth
             label={t("shop.checkout.coupon")}
@@ -681,7 +735,11 @@ const ShopProductDetail = () => {
           <Button onClick={() => setCheckoutOpen(false)} disabled={submitting}>
             {t("shop.checkout.cancel")}
           </Button>
-          <Button variant={"contained"} onClick={submitOrder} disabled={submitting}>
+          <Button
+            variant={"contained"}
+            onClick={submitOrder}
+            disabled={submitting || (payWith === "balance" && !balancePayable)}
+          >
             {t("shop.checkout.submit")}
           </Button>
         </DialogActions>

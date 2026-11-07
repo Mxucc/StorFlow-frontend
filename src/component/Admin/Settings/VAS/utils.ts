@@ -1,7 +1,10 @@
-import { VASProductType } from "../../../../api/dashboard";
+import { VASGiftCodeType, VASProductType } from "../../../../api/dashboard";
 
 /** 商品类型下拉选项顺序：容量包 / 会员 / 积分包。 */
 export const productTypes: VASProductType[] = ["storage", "group", "points"];
+
+/** 兑换码类型下拉选项：在上面三种商品之外还有「余额」（卡密充值）。 */
+export const giftCodeTypes: VASGiftCodeType[] = ["balance", "storage", "group", "points"];
 
 /** 容量单位（字节倍数），用于「数值 + 单位」形式的容量输入。 */
 export const sizeUnits = [1, 1024, 1024 ** 2, 1024 ** 3, 1024 ** 4];
@@ -35,6 +38,8 @@ export const typeLabel = (type: string, t: (key: string) => string) => {
       return t("vas.typeGroup");
     case "points":
       return t("vas.typePoints");
+    case "balance":
+      return t("vas.typeBalance");
     default:
       return type;
   }

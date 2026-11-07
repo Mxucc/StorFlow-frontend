@@ -1121,7 +1121,11 @@
     "checkout": {
       "title": "收银台",
       "amount": "金额",
-      "channel": "支付方式",
+      "method": "支付方式",
+      "channel": "支付渠道",
+      "payOnline": "在线支付",
+      "payBalance": "余额支付（可用 {{balance}}）",
+      "balanceShort": "余额不足：当前余额 {{balance}}，请先兑换卡密。",
       "coupon": "优惠码",
       "couponPlaceholder": "例如 DEMO10",
       "couponHint": "可选，最终金额以服务端计算为准。",
@@ -1698,6 +1702,8 @@
       "online": "在线支付 · {{name}}",
       "points": "使用积分支付（{{points}} 积分）",
       "pointsBalance": "当前积分 {{balance}}",
+      "balance": "余额支付",
+      "balanceHint": "当前余额 {{balance}}，余额不足时请先兑换卡密。",
       "noChannel": "暂无可用的支付渠道，请联系管理员。",
       "confirm": "确认支付",
       "success": "购买成功，权益已到账。",
@@ -1707,6 +1713,25 @@
       "amount": "应付金额：{{amount}}",
       "checkStatus": "我已支付，刷新状态",
       "failed": "下单失败，请稍后重试。"
+    },
+    "wallet": {
+      "balance": "账户余额",
+      "hint": "用卡密充值，余额可支付网盘订阅与小店资源。",
+      "history": "余额明细",
+      "noHistory": "暂无余额记录",
+      "fields": {
+        "delta": "变动",
+        "balance": "变动后余额",
+        "reason": "类型",
+        "note": "说明"
+      },
+      "reason": {
+        "recharge": "卡密充值",
+        "purchase": "购买订阅",
+        "shop_pay": "小店消费",
+        "refund": "订单退款",
+        "manual": "管理员调整"
+      }
     },
     "points": {
       "fields": {
@@ -1729,7 +1754,8 @@
       "redeem": "兑换",
       "success": "兑换成功",
       "failed": "兑换失败",
-      "reward": "已到账：{{type}} {{num}}"
+      "reward": "已到账：{{type}} {{num}}",
+      "balanceReward": "已充值 {{amount}}，当前余额 {{balance}}"
     },
     "order": {
       "fields": {

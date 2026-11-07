@@ -168,6 +168,8 @@ export interface ShopProductDetail extends ShopProductSummary {
   can_preview: boolean;
   /** 收银台可选的支付通道（由后端按店铺配置算好）。 */
   pay_channels?: string[];
+  /** 是否允许用钱包余额支付（只有走平台通道的店铺才为 true）。 */
+  balance_payable?: boolean;
 }
 
 /** 从网盘文件签发出来的素材引用，直接写进 Markdown。 */
@@ -448,6 +450,8 @@ export interface CreateShopOrderService {
   channel?: string;
   coupon?: string;
   share_password?: string;
+  /** 用钱包余额付：付完立即到账，不再跳支付页。仅在 balance_payable 时可用。 */
+  pay_with?: "balance";
   ref?: string;
 }
 

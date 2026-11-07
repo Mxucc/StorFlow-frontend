@@ -8,9 +8,11 @@ import {
   getMyPoints,
   getVASShopProviders,
   getVASShopSKUs,
+  getWallet,
   VASPointsSummary,
   VASShopProvider,
   VASShopSKU,
+  VASWallet,
 } from "../../../api/vas.ts";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import { StyledTab, StyledTabs } from "../../Common/StyledComponents.tsx";
@@ -35,8 +37,8 @@ const tabOrder: StoreTabValue[] = [StoreTab.products, StoreTab.points, StoreTab.
 /**
  * 增值服务商店（用户侧）。
  *
- * 商品、支付渠道与积分由本页统一加载后下发给各 Tab，购买成功后统一刷新，
- * 保证「余额 / 积分 / 订单」在同一屏内始终一致。
+ * 商品、支付渠道、积分与钱包余额由本页统一加载后下发给各 Tab，购买 / 兑换成功后
+ * 统一刷新，保证「余额 / 积分 / 订单」在同一屏内始终一致。
  */
 const Store = () => {
   const { t } = useTranslation();
@@ -46,12 +48,19 @@ const Store = () => {
   const [skus, setSkus] = useState<VASShopSKU[] | undefined>();
   const [providers, setProviders] = useState<VASShopProvider[] | undefined>();
   const [points, setPoints] = useState<VASPointsSummary | undefined>();
+  const [wallet, setWallet] = useState<VASWallet | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
 
   const loadPoints = useCallback(() => {
     return dispatch(getMyPoints())
       .then((res) => setPoints(res ?? { balance: 0, history: [] }))
+      .catch(() => undefined);
+  }, [dispatch]);
+
+  const loadWallet = useCallback(() => {
+    return dispatch(getWallet())
+      .then((res) => setWallet(res ?? { balance: 0, currency: "CNY", history: [] }))
       .catch(() => undefined);
   }, [dispatch]);
 
@@ -66,8 +75,9 @@ const Store = () => {
         .then((res) => setProviders(res ?? []))
         .catch(() => setProviders([])),
       loadPoints(),
+      loadWallet(),
     ]).finally(() => setLoading(false));
-  }, [dispatch, loadPoints, t]);
+  }, [dispatch, loadPoints, loadWallet, t]);
 
   useEffect(() => {
     load();
@@ -77,14 +87,17 @@ const Store = () => {
 
   const onPurchased = useCallback(() => {
     loadPoints();
+    loadWallet();
     load();
-  }, [load, loadPoints]);
+  }, [load, loadPoints, loadWallet]);
 
   const onRedeemed = useCallback(() => {
     loadPoints();
-  }, [loadPoints]);
+    loadWallet();
+  }, [loadPoints, loadWallet]);
 
   const pointsBalance = points?.balance ?? 0;
+  const walletBalance = wallet?.balance ?? 0;
 
   const emptyStore = useMemo(() => {
     return !loading && !error && (skus?.length ?? 0) === 0;
@@ -142,6 +155,7 @@ const Store = () => {
             skus={skus ?? []}
             providers={providers ?? []}
             points={pointsBalance}
+            wallet={walletBalance}
             onPurchased={onPurchased}
           />
         )}
@@ -150,7 +164,7 @@ const Store = () => {
           <StorePoints points={points} loading={loading} onRefresh={loadPoints} />
         )}
 
-        {!error && activeTab === StoreTab.giftcode && <StoreGiftCode onRedeemed={onRedeemed} />}
+        {!error && activeTab === StoreTab.giftcode && <StoreGiftCode wallet={wallet} onRedeemed={onRedeemed} />}
 
         {!error && activeTab === StoreTab.orders && <StoreOrders />}
       </Container>

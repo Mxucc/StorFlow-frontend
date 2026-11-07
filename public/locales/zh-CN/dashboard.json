@@ -885,7 +885,7 @@
     "createdAt": "创建时间",
     "prefix": "前缀",
     "prefixDes": "可选，生成的兑换码将以此前缀开头。",
-    "invalidCount": "生成数量需在 1 到 100 之间。",
+    "invalidCount": "生成数量需在 1 到 1000 之间。",
     "confirmDeleteCodes": "确认要删除选中的 {{num}} 个兑换码吗？",
     "deleteSelected": "删除选中 ({{num}})",
     "generatedCodesTitle": "已生成的礼品码",
@@ -893,7 +893,13 @@
     "copyAndClose": "复制并关闭",
     "duratonTimes": "时长倍数",
     "duratonTimesDes": "每个礼品码包含了多少份对应商品。",
-    "unknownProduct": "未知产品"
+    "unknownProduct": "未知产品",
+    "faceValue": "面额（元）",
+    "faceValueDes": "兑换后进入用户余额的金额。",
+    "validDays": "有效期（天）",
+    "validDaysDes": "留空或填 0 表示永久有效。",
+    "invalidAmount": "面额必须大于 0。",
+    "invalidValidDays": "有效天数必须是 0（永久）或正整数。"
   },
   "policy": {
     "acceleratedDomainUpload": "使用传输加速域名上传",
@@ -1852,7 +1858,8 @@
     "customPaymentEndpointDes": "创建支付订单时请求的接口 URL。",
     "appFeedback": "反馈页面 URL",
     "appForum": "用户论坛 URL",
-    "appLinkDes": "用于在客户端「设置」页面展示，留空即不展示该按钮。"
+    "appLinkDes": "用于在客户端「设置」页面展示，留空即不展示该按钮。",
+    "typeBalance": "余额卡密"
   },
   "pro": {
     "title": "Pro 版本专属功能",

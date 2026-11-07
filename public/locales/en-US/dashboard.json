@@ -885,7 +885,7 @@
     "createdAt": "Created at",
     "prefix": "Prefix",
     "prefixDes": "Optional, generated codes will start with this prefix.",
-    "invalidCount": "Quantity must be between 1 and 100.",
+    "invalidCount": "Quantity must be between 1 and 1000.",
     "confirmDeleteCodes": "Are you sure you want to delete the {{num}} selected gift code(s)?",
     "deleteSelected": "Delete selected ({{num}})",
     "generatedCodesTitle": "Generated Gift Codes",
@@ -893,7 +893,13 @@
     "copyAndClose": "Copy and Close",
     "duratonTimes": "Quantity",
     "duratonTimesDes": "How many quantities of the product is included in each gift code.",
-    "unknownProduct": "Unknown Product"
+    "unknownProduct": "Unknown Product",
+    "faceValue": "Face value (CNY)",
+    "faceValueDes": "Amount credited to the user's wallet after redemption.",
+    "validDays": "Validity (days)",
+    "validDaysDes": "Leave empty or 0 to keep it valid forever.",
+    "invalidAmount": "The face value must be greater than 0.",
+    "invalidValidDays": "Validity must be 0 (forever) or a positive integer."
   },
   "policy": {
     "acceleratedDomainUpload": "Use transfer acceleration domain for upload",
@@ -1852,7 +1858,8 @@
     "customPaymentEndpointDes": "URL to be requested when creating a payment order.",
     "appFeedback": "Feedback URL",
     "appForum": "User forum URL",
-    "appLinkDes": "Displayed in the mobile client settings page. Leave empty to hide the button."
+    "appLinkDes": "Displayed in the mobile client settings page. Leave empty to hide the button.",
+    "typeBalance": "Balance gift code"
   },
   "pro": {
     "title": "Pro edition exclusive features",
